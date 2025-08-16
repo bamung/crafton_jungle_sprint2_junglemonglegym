@@ -1,8 +1,4 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
   color-scheme: light dark;
   color: rgba(0, 0, 0, 0.87); /* 다크모드도 대비 좋게 변경 */
   background-color: #FFF8E7;  /* 전체 배경 밝은 크림톤 */
@@ -75,19 +71,18 @@ button:focus-visible {
   }
 }
 
-/* 폰트적용 */
-
 @font-face {
-  font-family: 'BMJUA';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/BMJUA.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-}
-@font-face {
-    font-family: 'GoryeongStrawberry';
-    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/GoryeongStrawberry.woff2') format('woff2');
+    font-family: 'BMJUA';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/BMJUA.woff') format('woff');
     font-weight: normal;
     font-style: normal;
+}
+
+@font-face {
+  font-family: 'GoryeongStrawberry';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/GoryeongStrawberry.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
 }
 
 .logo {
@@ -95,5 +90,5 @@ button:focus-visible {
 }
 
 body, #root {
-  font-family: 'BMJUA',sans-serif;
+  font-family: 'BMJUA', sans-serif;
 }
