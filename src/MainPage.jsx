@@ -1,28 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginModal from './LoginModal';
-import DiaryPopup from './components/DiaryPopup';
 import HeaderInfo from './components/HeaderInfo';
 import MainButtonGroup from './components/MainButtonGroup';
 import MonggleImageArea from './components/MonggleImageArea';
 import DailyStatusButtons from './components/DailyStatusButtons';
 import GainCalendarModal from './components/GainCalendarModal';
+import WeeklyDietMemoModal from './components/WeeklyDietMemoModal';  // 새로 만든 일기 팝업
 
 function MainPage() {
   const [showLogin, setShowLogin] = useState(true);
-  const [showDiaryPopup, setShowDiaryPopup] = useState(false);
+  const [showDiaryPopup, setShowDiaryPopup] = useState(false);  // 이제 WeeklyDietMemoModal 열림상태 관리
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleIconClick = (name) => {
     if (name === "일기") {
       setShowDiaryPopup(true);
-    }
-    else if (name === "득근캘린더") {
+      setCalendarOpen(false);
+    } else if (name === "득근캘린더") {
       setCalendarOpen(true);
-    }
-    else {
+      setShowDiaryPopup(false);
+    } else {
       alert(`"${name}" 기능은 추후 연결됩니다!`);
     }
   };
+
+  useEffect(() => {
+    if (showDiaryPopup || calendarOpen) {
+      document.body.style.overflow = 'hidden';  // 스크롤 잠금
+    } else {
+      document.body.style.overflow = '';        // 스크롤 해제
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showDiaryPopup, calendarOpen]);
 
   const handlePartClick = (part) => {
     alert(`"${part}" 부위를 선택하셨습니다.`);
@@ -61,9 +73,12 @@ function MainPage() {
 
       <DailyStatusButtons handleIconClick={handleIconClick} />
 
-      {showDiaryPopup && <DiaryPopup onClose={() => setShowDiaryPopup(false)} />}
+      {/* 기존 DiaryPopup 대신 새로 만든 WeeklyDietMemoModal */}
+      <WeeklyDietMemoModal
+        isOpen={showDiaryPopup}
+        onClose={() => setShowDiaryPopup(false)}
+      />
 
-      {/* GainCalendarModal 모달 연동 */}
       <GainCalendarModal
         isOpen={calendarOpen}
         onClose={() => setCalendarOpen(false)}

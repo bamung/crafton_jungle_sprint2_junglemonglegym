@@ -1,331 +1,270 @@
-import React, { useState, useEffect, useRef } from "react";
-
+import React, { useState, useEffect } from "react";
 const REWARD_DAYS = 15;
+/* 반응형/크기 오버라이드 CSS */
+const responsiveCSS = `
+  .gc-grid {
+    display:grid;
+    grid-template-columns:repeat(7, minmax(0,1fr));
+    grid-template-rows: repeat(6, 1fr);
+    gap:4px;
+    height:100%;
+    min-height:0;
+  }
+  .gc-cell, .gc-empty { min-height:0; overflow:hidden; }
+  .gc-check { width:24px; height:24px; right:8px; bottom:8px; font-size:14px; }
+  @media (max-width: 900px){
+    .gc-title { font-size: 18px !important; padding: 8px 14px !important; }
+    .gc-weekday { padding: 6px 0 !important; }
+  }
+  @media (max-width: 640px){
+    .gc-title { font-size: 16px !important; }
+    .gc-weekday { padding: 4px 0 !important; }
+    .gc-check { width:18px; height:18px; right:6px; bottom:6px; font-size:12px; }
+  }
+`;
+
+const weekdayColors = [
+  "#ED9090", // 일: 
+  "#f0bc81ff", // 월: 
+  "#ebe9a0ff", // 화: 
+  "#74b96cff", // 수: 
+  "#9290e7ff", // 목: 
+  "#c75fe7ff", // 금: 
+  "#d647a7ff"  // 토: 
+];
 
 const styles = {
   modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.35)",
-    backdropFilter: "blur(2px)",
-    zIndex: 2000,
+    position:"fixed",
+    inset:0,
+    background:"#FAF4E4CC",    // 연베이지 투명
+    backdropFilter:"blur(2px)",
+    zIndex:2000
   },
   modal: {
-    position: "fixed",
-    inset: 0,
-    margin: "auto",
-    width: "min(960px, 94vw)",
-    height: "min(88vh, 940px)",
-    background: "#f5dac0ed",
-    borderRadius: "18px",
-    outline: "5px solid #482d1c",
-    boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
-    padding: 16,
-    overflow: "auto",
-    zIndex: 2001,
-    display: "flex",
-    flexDirection: "column",
+    position:"fixed",inset:0,margin:"auto",
+    width:"min(960px,94vw)",
+    height:"min(92vh,940px)",
+    background:"#FAF4E4",
+    borderRadius:18,
+    outline:"5px solid #d4acacff",  // 연한 갈색 라인
+    boxShadow:"0 10px 28px rgba(112,97,78,0.10)",
+    zIndex:2001,
+    display:"grid",
+    gridTemplateRows:"auto auto 1fr auto",
+    gap:8,
+    padding:12,
+    overflow:"hidden"
   },
   header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    flexWrap: "wrap",
+    display:"grid",
+    gridTemplateColumns:"auto 1fr auto auto auto",
+    alignItems:"center",
+    gap:8
   },
-  title: {
-    flex: 1,
-    textAlign: "center",
-    background: "#FFE39C",
-    padding: "12px 16px",
-    fontWeight: 800,
-    fontSize: 20,
-    borderRadius: 14,
-    border: "5px solid #482d1c",
-    textShadow: "0 1px rgba(255,255,255,0.4)",
+  title:{
+    textAlign:"center",
+    background:"#FFFBE8",
+    padding:"8px 16px",
+    fontWeight:800,fontSize:20,
+    borderRadius:14,
+    border:"5px solid #afe1fdff",
+    textShadow:"0 1px rgba(255,255,255,0.4)",
+    whiteSpace:"nowrap",
+    overflow:"hidden",
+    textOverflow:"ellipsis"
   },
-  navBtn: {
-    border: "5px solid #482d1c",
-    background: "#fff7e8",
-    borderRadius: 12,
-    padding: "8px 12px",
-    cursor: "pointer",
-    color: "#482d1c",
+  navBtn:{border:"4px solid #a6f3ffff",background:"#FFFBE8",borderRadius:12,padding:"8px 12px",cursor:"pointer",color:"#8D7966"},
+  closeBtn:{
+    width:36,height:36,
+    borderRadius:"9999px",
+    background:"#FFB7B7",
+    border:"4px solid #B5A38D",
+    display:"flex",alignItems:"center",justifyContent:"center",
+    cursor:"pointer",
+    lineHeight:1
   },
-  weekdayGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7,1fr)",
-    gap: 4,
-    marginBottom: 4,
+  closeGlyph:{
+    fontWeight:900,
+    fontSize:20,
+    color:"#634B2E",
+    marginTop:5
   },
-  weekdayCell: {
-    textAlign: "center",
-    padding: "8px 0",
-    borderRadius: 12,
-    border: "5px solid #482d1c",
-    background: "#fff7e8",
-    fontWeight: 800,
+  weekdayGrid:{
+    display:"grid",
+    gridTemplateColumns:"repeat(7,1fr)",
+    gap:4,
+    marginBottom:0,
+    minHeight:36
   },
-  grids: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7,1fr)",
-    gap: 4,
-    flexGrow: 1,
+  weekdayCell:{
+    textAlign:"center",
+    padding:"6px 0",
+    borderRadius:12,
+    border:"4px solid #C2B4A2",
+    background:"#FFFBE8",
+    fontWeight:800,
+    fontSize:17
   },
-  cell: {
-    position: "relative",
-    borderRadius: 16,
-    border: "5px solid #c1976f",
-    background:
-      "linear-gradient(180deg, rgba(255,255,255,.75), transparent 60%)," +
-      "radial-gradient(200% 180% at 50% -10%, rgba(255,255,255,.25), transparent 40%)," +
-      "linear-gradient(180deg, #F5FFE9, #FFEBDD)",
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "flex-start",
-    padding: 12,
-    aspectRatio: "1 / 1",
-    cursor: "pointer",
+  daysWrap:{ minHeight:0, height:"100%" },
+  cell:{position:"relative",borderRadius:16,border:"5px solid #ffd2d2ff",
+    background:"linear-gradient(180deg, rgba(255,255,255,.75), transparent 60%), radial-gradient(200% 180% at 50% -10%, rgba(255,255,255,.25), transparent 40%), linear-gradient(180deg, #F5FFE9, #FFEBDD)",
+    display:"flex",alignItems:"flex-start",justifyContent:"flex-start",
+    padding:10,cursor:"pointer",overflow:"hidden"
   },
-  cellEmpty: {
-    border: "4px dashed #c1976f",
-    borderRadius: 14,
-    aspectRatio: "1 / 1",
-    opacity: 0.45,
+  cellEmpty:{border:"4px dashed #ffd8b4ff",borderRadius:14,opacity:.45},
+  dayNumber:{fontWeight:800},
+  checkBtn:{
+    position:"absolute",right:8,bottom:8,
+    width:24,height:24,
+    border:"4px solid #ffababff",
+    borderRadius:"50%",
+    background:"rgba(255,255,255,0.7)",
+    display:"flex",alignItems:"center",justifyContent:"center",
+    fontSize:14,lineHeight:1,color:"#F5F6C4"
   },
-  dayNumber: {
-    fontWeight: 800,
-  },
-  checkBtn: {
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-    width: 30,
-    height: 30,
-    border: "5px solid #482d1c",
-    borderRadius: "50%",
-    background: "rgba(255,255,255,0.7)",
-    display: "grid",
-    placeItems: "center",
-    fontSize: 18,
-    color: "#f5f6c4",
-  },
-  checked: {
-    background: "#fc9494",
-    boxShadow: "inset 0 2px 0 rgba(0,0,0,0.08)",
-    color: "#f5f6c4",
-  },
-  todayOutline: {
-    outline: "3px dashed rgba(79,59,47,0.7)",
-    outlineOffset: -6,
-  },
-  footer: {
-    marginTop: 12,
-    display: "flex",
-    gap: 12,
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  progressBarContainer: {
-    flex: 1,
-    height: 10,
-    border: "5px solid #482d1c",
-    borderRadius: 12,
-    background: "#fff7e8",
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    background: "linear-gradient(90deg,#dfab78,#eba13a)",
-    transition: "width 0.25s ease",
-  },
-  giftBox: {
-    width: 62,
-    height: 62,
-    border: "5px solid #482d1c",
-    borderRadius: 14,
-    background: "#fff7e8",
-    position: "relative",
-  },
-  giftLocked: {
-    filter: "saturate(0.1) opacity(0.7)",
-  },
-  giftActive: {
-    animation: "twinkle 1.15s infinite ease-in-out",
-    cursor: "pointer",
-  },
-  "@keyframes twinkle": {
-    "0%,100%": {
-      boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-      transform: "translateY(0)",
-    },
-    "50%": {
-      boxShadow: "0 10px 24px rgba(255,211,110,0.45)",
-      transform: "translateY(-1px)",
-    },
-  },
+  checkedBtn:{background:"#f79090ff",boxShadow:"inset 0 2px 0 rgba(0,0,0,0.08)",color:"#F5F6C4"},
+  todayOutline:{outline:"3px dashed rgba(133, 101, 81, 0.7)",outlineOffset:-6},
+  footer:{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"},
+  progressBarContainer:{flex:1,height:10,border:"5px solid #482D1C",borderRadius:12,background:"#FFF7E8",overflow:"hidden"},
+  progressBar:{height:"100%",background:"linear-gradient(90deg,#b61010ff,#EBA13A)",transition:"width 0.25s ease"},
+  giftBox:{width:50,height:50,border:"5px solid #b61010ff",borderRadius:14,background:"#F75C5C",position:"relative"},
+  giftLocked:{filter:"saturate(0.1) opacity(0.7)"},
+  giftActive:{animation:"twinkle 1.15s infinite ease-in-out",cursor:"pointer"},
 };
-
-// 헬퍼 함수: 달의 날짜 배열 생성 + 시작 요일 맞추기
-function generateCalendar(year, month) {
-  const firstDayWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const cells = [];
-  // 빈 칸 생성
-  for(let i=0; i<firstDayWeekday; i++){
-    cells.push(null);
-  }
-  // 날짜 생성
-  for(let d=1; d<=daysInMonth; d++){
-    cells.push(d);
-  }
-  return cells;
+function buildCells(year, month){
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const arr = [];
+  for(let i=0;i<firstDow;i++) arr.push(null);
+  for(let d=1; d<=daysInMonth; d++) arr.push(d);
+  while(arr.length < 42) arr.push(null);
+  return arr.slice(0,42);
 }
-
-export default function GainCalendarModal({ isOpen, onClose }) {
-  const [viewDate, setViewDate] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
+const ymKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+export default function GainCalendarModal({ isOpen, onClose }){
+  const [viewDate, setViewDate] = useState(()=> {
+    const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1);
   });
-  const [checkedDays, setCheckedDays] = useState(new Set());
-
-  useEffect(() => {
-    // 모달 열릴 때 현재 달로 초기화, 출석 정보 초기화(임시)
+  const [checksByMonth, setChecksByMonth] = useState({});
+  useEffect(()=> {
     if(isOpen){
-      const now = new Date();
-      setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
-      setCheckedDays(new Set());
+      const n = new Date();
+      setViewDate(new Date(n.getFullYear(), n.getMonth(), 1));
     }
   }, [isOpen]);
-
-  const cells = generateCalendar(viewDate.getFullYear(), viewDate.getMonth());
-
-  // 출석 체크 토글
-  function toggleDay(day) {
-    if(day === null) return;
-    setCheckedDays((prev) => {
-      const newSet = new Set(prev);
-      if(newSet.has(day)) newSet.delete(day);
-      else newSet.add(day);
-      return newSet;
+  const key = ymKey(viewDate);
+  const monthSet = checksByMonth[key] ?? new Set();
+  const cells = buildCells(viewDate.getFullYear(), viewDate.getMonth());
+  const toggleDay = (day) => {
+    if(day == null) return;
+    setChecksByMonth(prev => {
+      const copy = {...prev};
+      const cur = new Set(copy[key] ?? []);
+      if(cur.has(day)) cur.delete(day); else cur.add(day);
+      copy[key] = cur;
+      return copy;
     });
-  }
-
-  // 이전 달 보기
-  function prevMonth() {
-    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
-  }
-
-  // 다음 달 보기
-  function nextMonth() {
-    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
-  }
-
-  // 오늘 달로 이동
-  function goToToday() {
-    const now = new Date();
-    setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
-  }
-  
-  const progressPercent = Math.min((checkedDays.size / REWARD_DAYS) * 100, 100);
-  const isGiftActive = checkedDays.size >= REWARD_DAYS;
-
-  return isOpen ? (
+  };
+  const prevMonth = () => setViewDate(d => new Date(d.getFullYear(), d.getMonth()-1, 1));
+  const nextMonth = () => setViewDate(d => new Date(d.getFullYear(), d.getMonth()+1, 1));
+  const goToToday  = () => { const n=new Date(); setViewDate(new Date(n.getFullYear(), n.getMonth(), 1)); };
+  const progressPercent = Math.min((monthSet.size / REWARD_DAYS) * 100, 100);
+  const isGiftActive = monthSet.size >= REWARD_DAYS;
+  if(!isOpen) return null;
+  return (
     <>
-      <div style={styles.modalOverlay} onClick={onClose}></div>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="gain-calendar-title"
-        tabIndex={-1}
-        style={styles.modal}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <style>{responsiveCSS}</style>
+      <div style={styles.modalOverlay} onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-labelledby="gain-calendar-title"
+           tabIndex={-1} style={styles.modal} onClick={(e)=>e.stopPropagation()}>
+        {/* ── 헤더: 이전 | 제목 | 다음 | 오늘 | X ── */}
         <div style={styles.header}>
-          <button aria-label="이전 달" onClick={prevMonth} style={styles.navBtn}>◀</button>
-          <div id="gain-calendar-title" style={styles.title}>
-            {viewDate.getFullYear()}.{String(viewDate.getMonth() + 1).padStart(2, "0")} 득근 캘린더
+          <button aria-label="이전 달" onClick={prevMonth} style={styles.navBtn}>:뒤쪽_화살표:</button>
+          <div id="gain-calendar-title" className="gc-title" style={styles.title}>
+            {viewDate.getFullYear()}.{String(viewDate.getMonth()+1).padStart(2,"0")} 득근 캘린더
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button aria-label="다음 달" onClick={nextMonth} style={styles.navBtn}>▶</button>
-            <button aria-label="오늘로 이동" onClick={goToToday} style={styles.navBtn}>오늘</button>
-          </div>
+          <button aria-label="다음 달" onClick={nextMonth} style={styles.navBtn}>:앞쪽_화살표:</button>
+          {/* 오늘 버튼 */}
+          <button aria-label="오늘로 이동" onClick={goToToday} style={styles.navBtn}>오늘</button>
+          {/* 닫기(X) */}
+          <button
+            type="button"
+            aria-label="닫기"
+            onClick={onClose}
+            style={styles.closeBtn}
+            title="닫기"
+          >
+            <span style={styles.closeGlyph}>×</span>
+          </button>
         </div>
-
         <div style={styles.weekdayGrid}>
-          {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
-            <div key={d} style={styles.weekdayCell}>{d}</div>
-          ))}
+        {["일","월","화","수","목","금","토"].map((d, idx) => (
+            <div
+            key={d}
+            className="gc-weekday"
+            style={{
+                ...styles.weekdayCell,
+                color: weekdayColors[idx],
+                borderColor: weekdayColors[idx], // 테두리까지 적용하면 더욱 그림 느낌
+                background: "#FAF4E4"
+            }}>
+            {d}
+            </div>
+        ))}
         </div>
-
-        <div style={styles.grids} role="grid" aria-label="득근 캘린더 날짜">
-          {cells.map((day, idx) => {
-            if(day === null){
-              return <div key={idx} style={styles.cellEmpty} aria-hidden="true"></div>;
-            }
-            const isToday = (() => {
-              const today = new Date();
-              return day === today.getDate() && viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
-            })();
-            const checked = checkedDays.has(day);
-            return (
-              <div
-                key={idx}
-                role="gridcell"
-                tabIndex={0}
-                aria-checked={checked}
-                onClick={() => toggleDay(day)}
-                onKeyDown={(e) => { if(e.key === "Enter" || e.key === " ") toggleDay(day); }}
-                style={{
-                  ...styles.cell,
-                  outline: isToday ? styles.todayOutline.outline : "none",
-                  outlineOffset: isToday ? styles.todayOutline.outlineOffset : "none",
-                  backgroundColor: checked ? "#fc9494" : styles.cell.background,
-                  cursor: "pointer",
-                }}
-              >
-                <span style={styles.dayNumber}>{day}</span>
-                <button
-                  type="button"
-                  aria-label={`${day}일 출석 체크`}
-                  style={{
-                    ...styles.checkBtn,
-                    ...(checked ? styles.checked : {})
-                  }}
-                >
-                  ★
-                </button>
-              </div>
-            );
-          })}
+        {/* 날짜 */}
+        <div style={styles.daysWrap}>
+          <div className="gc-grid" role="grid" aria-label="득근 캘린더 날짜">
+            {cells.map((day, i) => {
+              if(day == null){
+                return <div key={i} className="gc-empty" style={styles.cellEmpty} aria-hidden="true" />;
+              }
+              const t = new Date();
+              const isToday = (day === t.getDate()
+                && viewDate.getMonth() === t.getMonth()
+                && viewDate.getFullYear() === t.getFullYear());
+              const checked = monthSet.has(day);
+              return (
+                <div key={i}
+                     className="gc-cell"
+                     role="gridcell"
+                     tabIndex={0}
+                     aria-checked={checked}
+                     onClick={()=>toggleDay(day)}
+                     onKeyDown={(e)=>{ if(e.key==="Enter"||e.key===" ") toggleDay(day); }}
+                     style={{...styles.cell, ...(isToday ? styles.todayOutline : {})}}>
+                  <span style={styles.dayNumber}>{day}</span>
+                  <button
+                    type="button"
+                    className="gc-check"
+                    aria-label={`${day}일 출석 체크`}
+                    style={{...styles.checkBtn, ...(checked ? styles.checkedBtn : {})}}
+                  >
+                    ★
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
-
+        
+        {/* 푸터 */}
         <div style={styles.footer}>
           <div style={styles.progressBarContainer} aria-hidden="true">
-            <div style={{ ...styles.progressBar, width: `${progressPercent}%` }} />
+            <div style={{...styles.progressBar, width:`${progressPercent}%`}} />
           </div>
-          <span aria-live="polite">출석 {checkedDays.size}/{REWARD_DAYS}</span>
-
+          <span aria-live="polite">출석 {monthSet.size}/{REWARD_DAYS}</span>
           <div
             role="button"
             aria-label={isGiftActive ? "선물 오픈 가능" : `한 달 ${REWARD_DAYS}일 이상 출석 시 선물 오픈`}
             tabIndex={0}
-            style={{
-              ...styles.giftBox,
-              ...(isGiftActive ? styles.giftActive : styles.giftLocked),
-            }}
-            onClick={() => {
-              if(isGiftActive) alert("🎉 선물 오픈! 메인 화면 몽글이 옆으로 이동합니다!");
-            }}
-            onKeyDown={(e) => {
-              if((e.key === "Enter" || e.key === " ") && isGiftActive) {
-                alert("🎉 선물 오픈! 메인 화면 몽글이 옆으로 이동합니다!");
-              }
-            }}
+            style={{...styles.giftBox, ...(isGiftActive ? styles.giftActive : styles.giftLocked)}}
+            onClick={()=>{ if(isGiftActive) alert(":짠: 선물 오픈! 메인 화면 몽글이 옆으로 이동합니다!"); }}
+            onKeyDown={(e)=>{ if((e.key==="Enter"||e.key===" ") && isGiftActive) alert(":짠: 선물 오픈! 메인 화면 몽글이 옆으로 이동합니다!"); }}
           />
         </div>
       </div>
     </>
-  ) : null;
+  );
 }
