@@ -35,61 +35,73 @@ const weekdayColors = [
 
 const styles = {
   modalOverlay: {
-    position:"fixed",
-    inset:0,
-    background:"#FAF4E4CC",    // 연베이지 투명
-    backdropFilter:"blur(2px)",
-    zIndex:2000
+    position: "fixed",
+    inset: 0,
+    background: "#FAF4E4CC",    // 따뜻한 연베이지 투명
+    backdropFilter: "blur(2px)",
+    zIndex: 2000
   },
   modal: {
-    position:"fixed",inset:0,margin:"auto",
-    width:"min(960px,94vw)",
-    height:"min(92vh,940px)",
-    background:"#FAF4E4",
-    borderRadius:18,
-    outline:"5px solid #d4acacff",  // 연한 갈색 라인
-    boxShadow:"0 10px 28px rgba(112,97,78,0.10)",
-    zIndex:2001,
-    display:"grid",
-    gridTemplateRows:"auto auto 1fr auto",
-    gap:8,
-    padding:12,
-    overflow:"hidden"
+    position: "fixed", inset: 0, margin: "auto",
+    width: "min(960px,94vw)",
+    height: "min(92vh,940px)",
+    background: "#FAF4E4",      // 그림일기 느낌 밝은 베이지
+    borderRadius: 18,
+    outline: "5px solid #e3bd8bff",  // 종이/연갈색 라인
+    boxShadow: "0 10px 28px rgba(218, 209, 196, 0.12)", // 더 따스한 갈색
+    zIndex: 2001,
+    display: "grid",
+    gridTemplateRows: "auto auto 1fr auto",
+    gap: 8,
+    padding: 12,
+    overflow: "hidden"
   },
+
   header: {
     display:"grid",
     gridTemplateColumns:"auto 1fr auto auto auto",
     alignItems:"center",
     gap:8
   },
-  title:{
-    textAlign:"center",
-    background:"#FFFBE8",
-    padding:"8px 16px",
-    fontWeight:800,fontSize:20,
-    borderRadius:14,
-    border:"5px solid #afe1fdff",
-    textShadow:"0 1px rgba(255,255,255,0.4)",
-    whiteSpace:"nowrap",
-    overflow:"hidden",
-    textOverflow:"ellipsis"
-  },
-  navBtn:{border:"4px solid #a6f3ffff",background:"#FFFBE8",borderRadius:12,padding:"8px 12px",cursor:"pointer",color:"#8D7966"},
-  closeBtn:{
-    width:36,height:36,
-    borderRadius:"9999px",
-    background:"#FFB7B7",
-    border:"4px solid #B5A38D",
-    display:"flex",alignItems:"center",justifyContent:"center",
-    cursor:"pointer",
-    lineHeight:1
-  },
-  closeGlyph:{
-    fontWeight:900,
-    fontSize:20,
-    color:"#634B2E",
-    marginTop:5
-  },
+title: {
+  textAlign: "center",
+  background: "#FFFBE8",
+  padding: "8px 16px",
+  fontWeight: 800,
+  fontSize: 20,
+  borderRadius: 14,
+  border: "5px solid #ecdbc2",
+  textShadow: "0 1px rgba(255,255,255,0.4)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis"
+},
+navBtn: {
+  border: "4px solid #ecdbc2",
+  background: "#FAF4E4",
+  borderRadius: 12,
+  padding: "8px 12px",
+  cursor: "pointer",
+  color: "#7e5a3e"
+},
+closeBtn: {
+  width: 36,
+  height: 36,
+  borderRadius: "9999px",
+  background: "#FAF4E4",
+  border: "4px solid #C2B4A2",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  lineHeight: 1
+},
+closeGlyph: {
+  fontWeight: 900,
+  fontSize: 20,
+  color: "#7e5a3e",
+  marginTop: 5
+},
   weekdayGrid:{
     display:"grid",
     gridTemplateColumns:"repeat(7,1fr)",
@@ -97,41 +109,99 @@ const styles = {
     marginBottom:0,
     minHeight:36
   },
-  weekdayCell:{
-    textAlign:"center",
-    padding:"6px 0",
-    borderRadius:12,
-    border:"4px solid #C2B4A2",
-    background:"#FFFBE8",
-    fontWeight:800,
-    fontSize:17
+
+  weekdayCell: {
+    textAlign: "center",
+    padding: "8px 0",
+    borderRadius: 12,
+    border: "4px solid #ecdbc2",         // 셀 외곽선: 따뜻한 갈색
+    background: "#fffbe8",
+    fontWeight: 800,
+    fontSize: 17,
+    color: "#a99e7e"
   },
-  daysWrap:{ minHeight:0, height:"100%" },
-  cell:{position:"relative",borderRadius:16,border:"5px solid #ffd2d2ff",
-    background:"linear-gradient(180deg, rgba(255,255,255,.75), transparent 60%), radial-gradient(200% 180% at 50% -10%, rgba(255,255,255,.25), transparent 40%), linear-gradient(180deg, #F5FFE9, #FFEBDD)",
-    display:"flex",alignItems:"flex-start",justifyContent:"flex-start",
-    padding:10,cursor:"pointer",overflow:"hidden"
+  daysWrap: { minHeight: 0, height: "100%" },
+  cell: {
+    position: "relative",
+    borderRadius: 16,
+    border: "4px solid #ecdbc2",         // 셀 외곽선: 따뜻한 갈색
+    background: "linear-gradient(180deg, #fffbe8 85%, #f7e8c5 100%)",
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    padding: 12,
+    cursor: "pointer",
+    overflow: "hidden"
   },
-  cellEmpty:{border:"4px dashed #ffd8b4ff",borderRadius:14,opacity:.45},
-  dayNumber:{fontWeight:800},
-  checkBtn:{
-    position:"absolute",right:8,bottom:8,
-    width:24,height:24,
-    border:"4px solid #ffababff",
-    borderRadius:"50%",
-    background:"rgba(255,255,255,0.7)",
-    display:"flex",alignItems:"center",justifyContent:"center",
-    fontSize:14,lineHeight:1,color:"#F5F6C4"
+  cellEmpty: {
+    border: "4px dashed #e9dcc8",        // 연베이지
+    borderRadius: 14,
+    opacity: .45,
+    background: "#fdf6e3"
   },
-  checkedBtn:{background:"#f79090ff",boxShadow:"inset 0 2px 0 rgba(0,0,0,0.08)",color:"#F5F6C4"},
-  todayOutline:{outline:"3px dashed rgba(133, 101, 81, 0.7)",outlineOffset:-6},
-  footer:{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"},
-  progressBarContainer:{flex:1,height:10,border:"5px solid #482D1C",borderRadius:12,background:"#FFF7E8",overflow:"hidden"},
-  progressBar:{height:"100%",background:"linear-gradient(90deg,#b61010ff,#EBA13A)",transition:"width 0.25s ease"},
-  giftBox:{width:50,height:50,border:"5px solid #b61010ff",borderRadius:14,background:"#F75C5C",position:"relative"},
-  giftLocked:{filter:"saturate(0.1) opacity(0.7)"},
-  giftActive:{animation:"twinkle 1.15s infinite ease-in-out",cursor:"pointer"},
+  dayNumber: {
+    fontWeight: 800,
+    color: "#b49a7f"                     // 따뜻한 갈색 글씨
+  },
+  checkBtn: {
+    position: "absolute", right: 8, bottom: 8,
+    width: 24, height:24,
+    border: "1px solid #e9dcc8",         // 체크라인: 연베이지
+    borderRadius: "50%",
+    background: "#fffbe8",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 16,
+    lineHeight: 1,
+    color: "#ffe384"                     // 별: 파스텔 노랑
+  },
+  checkedBtn: {
+    background: "#ed7d7d63",
+    boxShadow: "inset 0 0.1px 0 rgba(0,0,0,0.08)",
+    color: "#ffe384"
+  },
+  todayOutline: {
+    outline: "3px dashed #b1e5d9",       // 산뜻한 민트톤
+    outlineOffset: -6
+  },
+  footer: {
+    display: "flex",
+    gap: 12,
+    alignItems: "center",
+    flexWrap: "wrap"
+  },
+  progressBarContainer: {
+    flex: 1,
+    height: 10,
+    border: "4px solid #e9dcc8",
+    borderRadius: 12,
+    background: "#fffbe8",
+    overflow: "hidden"
+  },
+  progressBar: {
+    height: "100%",
+    background: "linear-gradient(90deg, #d8d81eff 0%, #ff8e8e 100%)", // 민트→주황→부드러운 빨강
+    transition: "width 0.25s ease"
+  },
+  giftBox: {
+    width: 50,
+    height: 50,
+    border: "5px solid #ffe384",         // 연노랑 테두리
+    borderRadius: 14,
+    background: "#ffb1b1",               // 부드러운 빨강
+    position: "relative"
+  },
+  giftLocked: {
+    filter: "saturate(0.1) opacity(0.7)"
+  },
+  giftActive: {
+    animation: "twinkle 1.15s infinite ease-in-out",
+    cursor: "pointer"
+  },
 };
+
+
 function buildCells(year, month){
   const firstDow = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month+1, 0).getDate();
@@ -180,11 +250,11 @@ export default function GainCalendarModal({ isOpen, onClose }){
            tabIndex={-1} style={styles.modal} onClick={(e)=>e.stopPropagation()}>
         {/* ── 헤더: 이전 | 제목 | 다음 | 오늘 | X ── */}
         <div style={styles.header}>
-          <button aria-label="이전 달" onClick={prevMonth} style={styles.navBtn}>:뒤쪽_화살표:</button>
+          <button aria-label="이전 달" onClick={prevMonth} style={styles.navBtn}>◀</button>
           <div id="gain-calendar-title" className="gc-title" style={styles.title}>
             {viewDate.getFullYear()}.{String(viewDate.getMonth()+1).padStart(2,"0")} 득근 캘린더
           </div>
-          <button aria-label="다음 달" onClick={nextMonth} style={styles.navBtn}>:앞쪽_화살표:</button>
+          <button aria-label="다음 달" onClick={nextMonth} style={styles.navBtn}>▶</button>
           {/* 오늘 버튼 */}
           <button aria-label="오늘로 이동" onClick={goToToday} style={styles.navBtn}>오늘</button>
           {/* 닫기(X) */}

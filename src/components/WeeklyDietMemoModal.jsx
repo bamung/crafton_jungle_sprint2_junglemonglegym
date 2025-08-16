@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 
 const NAMES = ['일','월','화','수','목','금','토'];
 
-// 날짜를 YYYY.MM.DD 포맷으로 변환
 const fmt = (y,m,d) => `${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')}`;
 
-// 시작일을 받아 해당 주 일요일 날짜 반환
 function startOfWeek(date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -14,16 +12,12 @@ function startOfWeek(date) {
   return d;
 }
 
-// 주어진 기준일의 한 주(일~토) 날짜 배열 반환
 function weekDates(anchor) {
   const start = startOfWeek(anchor);
   return Array.from({length:7}, (_,i) => new Date(start.getFullYear(), start.getMonth(), start.getDate()+i));
 }
 
-// 더미 함수 - 나중에 서버 연동 시 실제 API 호출로 교체
 async function fetchWeeklyDietData(anchor) {
-  // anchor는 이번 주 기준 날짜
-  // 예시로 모든 빈 데이터 내려주는 형태
   const dates = weekDates(anchor);
   return dates.map(d => ({
     date: d.toISOString().slice(0,10),
@@ -34,10 +28,7 @@ async function fetchWeeklyDietData(anchor) {
 }
 
 async function updateDayDiet(dateStr, data) {
-  // dateStr: YYYY-MM-DD, data: { diet, memo }
-  // 실제 서버 연동 시 호출 부분
   console.log(`업데이트 요청: ${dateStr}`, data);
-  // 예시는 바로 성공했다고 가정
   return true;
 }
 
@@ -45,7 +36,6 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
   const [anchor, setAnchor] = useState(new Date());
   const [weekData, setWeekData] = useState([]);
 
-  // 팝업 열릴 때 해당 주 데이터 로드
   useEffect(() => {
     if (!isOpen) return;
     async function loadData() {
@@ -55,29 +45,23 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
     loadData();
   }, [isOpen, anchor]);
 
-  // 날짜 범위 문자열
   const dates = weekDates(anchor);
   const rangeStr = `${fmt(dates[0].getFullYear(), dates[0].getMonth()+1, dates[0].getDate())} ~ ${fmt(dates[6].getFullYear(), dates[6].getMonth()+1, dates[6].getDate())}`;
 
-  // 오늘 날짜
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // 텍스트 변경 시 local state 수정 & 서버 업데이트 트리거
   const onChangeField = (index, field, value) => {
     setWeekData(prev => {
       const newData = [...prev];
       newData[index] = {...newData[index], [field]: value};
-      // 서버 업데이트 (비동기 호출, 에러 처리는 별도 구현 가능)
       updateDayDiet(newData[index].date, {diet: newData[index].diet, memo: newData[index].memo});
       return newData;
     });
   };
 
-  // ESC 키 눌렀을 때 닫기 처리
   useEffect(() => {
     if (!isOpen) return;
-
     const onKeyDown = (e) => {
       if(e.key === "Escape") {
         onClose();
@@ -91,7 +75,6 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
 
   return (
     <>
-      {/* 오버레이 */}
       <div
         onClick={onClose}
         style={{
@@ -102,8 +85,6 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
           zIndex: 3000,
         }}
       />
-
-      {/* 모달 박스 */}
       <div
         role="dialog"
         aria-modal="true"
@@ -128,59 +109,39 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
           color: "#5b4027",
         }}
       >
-        {/* 닫기 버튼 */}
-        <button
-          onClick={onClose}
-          aria-label="팝업 닫기"
+
+        <div
           style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            background: "transparent",
-            border: "none",
-            fontSize: 28,
-            cursor: "pointer",
-            color: "#5b4027",
-            fontWeight: "bold",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16,
+            padding: "0 16px",
+            boxSizing: "border-box",
           }}
         >
-          ×
-        </button>
-
-        {/* 헤더 영역 */}
-        <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 16,
-        padding: "0 16px",
-        boxSizing: "border-box",
-        }}>
-
-        {/* 왼쪽 타이틀 */}
-        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-            <h2 style={{
-            margin: 0,
-            fontSize: 24,
-            fontWeight: "bold",
-            backgroundColor: "#fcdcad",
-            padding: "6px 14px",
-            borderRadius: 12,
-            border: "3px solid #7e5a3e",
-            userSelect: "none",
-            }}>
-            주간 식단 · 메모
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 24,
+                fontWeight: "bold",
+                backgroundColor: "#fcdcad",
+                padding: "6px 14px",
+                borderRadius: 12,
+                border: "3px solid #7e5a3e",
+                userSelect: "none",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              몽글이 일기장
             </h2>
-        </div>
-
-        {/* 중앙 버튼 그룹 */}
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", gap: 8 }}>
-            {/* 이전주 */}
             <button
-            aria-label="이전 주"
-            onClick={() => setAnchor(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() -7))}
-            style={{
-                marginLeft: 50,
+              aria-label="이전 주"
+              onClick={() => setAnchor(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() -7))}
+              style={{
                 border: "3px solid #7e5a3e",
                 backgroundColor: "#fff7e8",
                 borderRadius: 10,
@@ -189,29 +150,34 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
                 fontWeight: "bold",
                 fontSize: 16,
                 color: "#5b4027",
+              }}
+            >
+              ◀
+            </button>
+          </div>
+          <div
+            style={{
+              flexGrow: 1,
+              margin: "0 16px",
+              border: "3px solid #7e5a3e",
+              backgroundColor: "#fff7e8",
+              padding: "6px 20px",
+              borderRadius: 10,
+              fontWeight: "bold",
+              fontSize: 16,
+              textAlign: "center",
+              userSelect: "none",
+              whiteSpace: "nowrap",
+              minWidth: 170,
             }}
-            >◀</button>
-
-            {/* 날짜 범위 */}
-            <div style={{
-            border: "3px solid #7e5a3e",
-            backgroundColor: "#fff7e8",
-            padding: "6px 20px",
-            borderRadius: 10,
-            fontWeight: "bold",
-            fontSize: 16,
-            minWidth: 210,
-            textAlign: "center",
-            userSelect: "none",
-            }}>
+          >
             {rangeStr}
-            </div>
-
-            {/* 다음주 */}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <button
-            aria-label="다음 주"
-            onClick={() => setAnchor(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7))}
-            style={{
+              aria-label="다음 주"
+              onClick={() => setAnchor(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() +7))}
+              style={{
                 border: "3px solid #7e5a3e",
                 backgroundColor: "#fff7e8",
                 borderRadius: 10,
@@ -220,31 +186,46 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
                 fontWeight: "bold",
                 fontSize: 16,
                 color: "#5b4027",
-            }}
-            >▶</button>
-
-            {/* 이번주 */}
+              }}
+            >
+              ▶
+            </button>
             <button
-            aria-label="이번 주로 이동"
-            onClick={() => setAnchor(new Date())}
-            style={{
+              aria-label="이번 주로 이동"
+              onClick={() => setAnchor(new Date())}
+              style={{
                 border: "3px solid #7e5a3e",
                 backgroundColor: "#fff7e8",
                 borderRadius: 10,
                 padding: "6px 12px",
                 cursor: "pointer",
                 fontWeight: "bold",
-                fontSize: 16,
+                fontSize: 22,
                 color: "#5b4027",
-            }}
-            >이번 주</button>
+                marginRight: -20,
+              }}
+            >
+              이번 주
+            </button>
+            <button
+              onClick={onClose}
+              aria-label="팝업 닫기"
+              style={{
+                background: "transparent",
+                border: "none",
+                fontSize: 28,
+                cursor: "pointer",
+                color: "#5b4027",
+                fontWeight: "bold",
+                lineHeight: 1,
+                marginRight: -40,
+              }}
+            >
+              ×
+            </button>
+          </div>
         </div>
 
-        {/* 오른쪽 빈 공간 */}
-        <div style={{ flex: 1 }} />
-        </div>
-
-        {/* 그리드 */}
         <div
           style={{
             display: "grid",
@@ -267,9 +248,9 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
                   flexDirection: "column",
                   gap: 8,
                   userSelect: "text",
+                  marginRight: -5,
                 }}
               >
-                {/* 요일 라벨 */}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                   <div
                     style={{
@@ -290,7 +271,6 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
                   </div>
                 </div>
 
-                {/* 식단 입력 */}
                 <div style={{ flexGrow: 1 }}>
                   <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6 }}>식단</div>
                   <textarea
@@ -309,13 +289,13 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
                       lineHeight: 1.5,
                       backgroundColor: "#fffaf0",
                       color: "#5b4027",
+                      marginLeft: "-6px"
                     }}
                   />
                 </div>
 
-                {/* 메모 입력 */}
                 <div>
-                  <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6 }}>메모</div>
+                  <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6, }}>메모</div>
                   <textarea
                     placeholder="간단한 메모를 적어보세요 :)"
                     value={weekData[i]?.memo || ""}
@@ -332,6 +312,7 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }) {
                       lineHeight: 1.5,
                       backgroundColor: "#fffaf0",
                       color: "#5b4027",
+                      marginLeft: "-6px"
                     }}
                   />
                 </div>
