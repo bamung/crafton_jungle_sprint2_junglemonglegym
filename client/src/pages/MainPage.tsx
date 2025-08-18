@@ -1,64 +1,129 @@
-// client/src/pages/MainPage.tsx
-import React from "react";
-import HeaderInfo from "../components/HeaderInfo";
-import MonggleImageArea from "../components/MonggleImageArea";
-import MainButtonGroup from "../components/MainButtonGroup";
-import DailyStatusButtons from "../components/DailyStatusButtons";
-// 필요하면 모달도 같은 방식으로(default) 가져오세요.
-// import GainCalendarModal from "../components/GainCalendarModal";
-// import WeeklyDietMemoModal from "../components/WeeklyDietMemoModal";
-
-import { useAuth } from "../store/auth";
-import { dPlusFrom } from "../utils/dayCounter";
+import React, { useState, useEffect } from 'react';
+import HeaderInfo from '../components/HeaderInfo';
+import LeftButtonGroup from '../components/LeftButtonGroup';
+import RightButtonGroup from '../components/RightButtonGroup';
+import MonggleImageArea from '../components/MonggleImageArea';
+import DailyStatusButtons from '../components/DailyStatusButtons';
+import GainCalendarModal from '../components/GainCalendarModal';
+import WeeklyDietMemoModal from '../components/WeeklyDietMemoModal';
+import { useAuth } from '../store/auth';
+import type { BodyPart } from '../components/MonggleImageArea';
 
 export default function MainPage() {
+  // 로그인 상태
   const { user, clear } = useAuth();
-  const dplus = dPlusFrom(user?.createdAt);
-  const today = new Date().toLocaleDateString();
+
+  // 로그인 안 된 경우 접근 차단 or 로그인 페이지 표시 예시
+  if (!user) {
+    return (
+      <div style={{ padding: 20, textAlign: 'center' }}>
+        <h2>로그인이 필요합니다.</h2>
+        {/* 로그인 페이지 링크 또는 컴포넌트 배치 */}
+      </div>
+    );
+  }
+
+  // 모달 상태 관리 (네 코드 기준)
+  const [showDiaryPopup, setShowDiaryPopup] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const handleIconClick = (name: string): void => {
+    if (name === '일기') {
+      setShowDiaryPopup(true);
+      setCalendarOpen(false);
+    } else if (name === '득근캘린더') {
+      setCalendarOpen(true);
+      setShowDiaryPopup(false);
+    } else {
+      alert(`"${name}" 기능은 추후 연결됩니다!`);
+    }
+  };
+
+  useEffect(() => {
+    if (showDiaryPopup || calendarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showDiaryPopup, calendarOpen]);
+
+  const handlePartClick = (part: BodyPart): void => {
+    alert(`"${part}" 부위를 선택하셨습니다.`);
+  };
+
+  // 날짜 문자열
+  function getTodayString(): string {
+    const today = new Date();
+    return `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+  }
+  const todayString = getTodayString();
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
-      {/* 상단 바 */}
+    <div
+      style={{
+        maxWidth: '1500px',
+        margin: '0 auto',
+        padding: '28px 10px 10px 10px',
+        textAlign: 'center',
+        position: 'relative',
+        minHeight: '90vh',
+        fontFamily: "'BMJUA', sans-serif",
+      }}
+    >
+      {/* 상단 로그인 정보 및 로그아웃 버튼 (친구 코드 기반 UI) */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
+          display: 'flex',
+          justifyContent: 'space-between',
           gap: 12,
-          alignItems: "center",
-          padding: "14px 18px",
-          background: "white",
-          borderBottom: "1px solid #e5e7eb",
-          position: "sticky",
+          alignItems: 'center',
+          padding: '14px 18px',
+          background: 'white',
+          borderBottom: '1px solid #e5e7eb',
+          position: 'sticky',
           top: 0,
           zIndex: 20,
         }}
       >
-        <div style={{ fontWeight: 700 }}>{dplus !== null ? `D+${dplus}` : "환영합니다!"}</div>
-        <div>{today}</div>
+        <div style={{ fontWeight: 700 }}>{`환영합니다, ${user.name || '사용자'}!`}</div>
+        <div>{todayString}</div>
         <button
           onClick={clear}
           style={{
-            padding: "6px 10px",
+            padding: '6px 10px',
             borderRadius: 8,
-            border: "1px solid #e5e7eb",
-            background: "#fff",
-            cursor: "pointer",
+            border: '1px solid #e5e7eb',
+            background: '#fff',
+            cursor: 'pointer',
           }}
         >
           로그아웃
         </button>
       </div>
 
-      {/* 기존 메인 콘텐츠 */}
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: 16 }}>
-        <HeaderInfo />
-        <MonggleImageArea />
-        <MainButtonGroup />
-        <DailyStatusButtons />
-        {/* 필요 시 모달 컴포넌트를 배치 */}
-        {/* <GainCalendarModal /> */}
-        {/* <WeeklyDietMemoModal /> */}
+      {/* 네가 만든 메인 UI 레이아웃 */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          margin: '80px 0 22px',
+          alignItems: 'center',
+          flexWrap: 'nowrap',
+        }}
+      >
+        <LeftButtonGroup onClick={handleIconClick} buttonSize="12vw" minSize={48} maxSize={80} />
+        <MonggleImageArea handlePartClick={handlePartClick} />
+        <RightButtonGroup onClick={handleIconClick} buttonSize="12vw" minSize={48} maxSize={80} />
       </div>
+
+      <DailyStatusButtons handleIconClick={handleIconClick} />
+
+      {/* 모달은 네 코드 기준으로 유지 */}
+      <WeeklyDietMemoModal isOpen={showDiaryPopup} onClose={() => setShowDiaryPopup(false)} />
+      <GainCalendarModal isOpen={calendarOpen} onClose={() => setCalendarOpen(false)} />
     </div>
   );
 }
