@@ -99,7 +99,7 @@ export default function ForgotPage() {
   );
 }
 
-const baseFont = `'Poor Story', system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif`;
+const baseFont = `'BMJUA', sans-serif`;
 const styles: Record<string, React.CSSProperties> = {
   pageWrap: { minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px", fontFamily: baseFont },
   diaryCard: { position: "relative", width: "min(780px, 95vw)", background: "#fff6c9", border: "6px solid #1f2937", borderRadius: 22, boxShadow: "0 22px 38px rgba(0,0,0,0.12)", padding: "22px 22px 26px", overflow: "hidden", fontFamily: baseFont },

@@ -59,7 +59,7 @@ function useResponsiveStyles() {
     display: "flex",
     justifyContent: "space-around",
     gap: "14px",
-    margin: "24px 0",
+    margin: "34px 0",
     flexWrap: "wrap",
   };
 

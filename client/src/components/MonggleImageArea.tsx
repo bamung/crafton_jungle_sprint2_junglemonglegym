@@ -16,6 +16,7 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
         width: "100%",
         minHeight: "480px",
         background: "transparent",
+
       }}
     >
       <img
@@ -26,11 +27,11 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
           maxWidth: "70vw",
           height: "auto",
           display: "block",
-          margin: "0 auto",
+          margin: "-40px auto 0 auto",
           background: "transparent",
           borderRadius: "35px",
           zIndex: 1,
-          position: "relative"
+          position: "relative",
         }}
       />
       {/* 어깨 */}
@@ -63,7 +64,7 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
       <button
         onClick={() => handlePartClick('등')}
         style={{
-          position: "absolute", top: "17%", left: "48%",
+          position: "absolute", top: "11%", left: "48%",
           display: "flex", alignItems: "center", flexDirection: "column",
           background: "transparent", border: "none", padding: 0, margin: 0,
           cursor: "pointer", outline: "none", zIndex: 20
@@ -84,7 +85,7 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
       <button
         onClick={() => handlePartClick('가슴')}
         style={{
-          position: "absolute", top: "58%", left: "44.5%",
+          position: "absolute", top: "55%", left: "44.5%",
           display: "flex", alignItems: "center", background: "transparent",
           border: "none", padding: 0, margin: 0, cursor: "pointer", outline: "none", zIndex: 20
         }}

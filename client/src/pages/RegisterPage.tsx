@@ -5,18 +5,6 @@ import { api } from "../lib/api";
 export default function RegisterPage() {
   const nav = useNavigate();
 
-  // 손글씨 폰트 로드
-  useEffect(() => {
-    const id = "diary-font-poorstory";
-    if (!document.getElementById(id)) {
-      const link = document.createElement("link");
-      link.id = id;
-      link.rel = "stylesheet";
-      link.href = "https://fonts.googleapis.com/css2?family=Poor+Story&display=swap";
-      document.head.appendChild(link);
-    }
-  }, []);
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -147,7 +135,7 @@ export default function RegisterPage() {
 }
 
 /* ======= 스타일 ======= */
-const baseFont = `'Poor Story', system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif`;
+const baseFont = `'BMJUA', sans-serif`;
 
 const styles: Record<string, React.CSSProperties> = {
   pageWrap: { minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px", fontFamily: baseFont },

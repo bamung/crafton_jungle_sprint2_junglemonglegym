@@ -223,14 +223,19 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }: WeeklyDietMemoM
               onClick={onClose}
               aria-label="팝업 닫기"
               style={{
+                position: "relative",
+                left: 15,
+                top: 2,
+                width: 40,
+                height: 40,
                 background: "transparent",
                 border: "none",
-                fontSize: 28,
+                fontSize: 20,
                 cursor: "pointer",
                 color: "#5b4027",
                 fontWeight: "bold",
                 lineHeight: 1,
-                marginRight: -40,
+                padding: 0,
               }}
             >
               ×

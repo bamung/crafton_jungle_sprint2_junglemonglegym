@@ -123,7 +123,7 @@ export default function LoginPage() {
   );
 }
 
-const baseFont = `'Poor Story', system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, sans-serif`;
+const baseFont = `'BMJUA', sans-serif`;
 
 const styles: Record<string, React.CSSProperties> = {
   pageWrap: { minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px", fontFamily: baseFont },

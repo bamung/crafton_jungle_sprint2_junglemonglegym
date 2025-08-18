@@ -73,43 +73,15 @@ export default function MainPage() {
         fontFamily: "'BMJUA', sans-serif",
       }}
     >
-      {/* 상단 로그인 정보 및 로그아웃 버튼 (친구 코드 기반 UI) */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 12,
-          alignItems: 'center',
-          padding: '14px 18px',
-          background: 'white',
-          borderBottom: '1px solid #e5e7eb',
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-        }}
-      >
-        <div style={{ fontWeight: 700 }}>{`환영합니다, ${user.name || '사용자'}!`}</div>
-        <div>{todayString}</div>
-        <button
-          onClick={clear}
-          style={{
-            padding: '6px 10px',
-            borderRadius: 8,
-            border: '1px solid #e5e7eb',
-            background: '#fff',
-            cursor: 'pointer',
-          }}
-        >
-          로그아웃
-        </button>
-      </div>
+      {/* HeaderInfo 추가 - 로그아웃 이벤트 핸들러 clear 전달 */}
+      <HeaderInfo todayString={todayString} onLogout={clear} />
 
       {/* 네가 만든 메인 UI 레이아웃 */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          margin: '80px 0 22px',
+          margin: '0px 0 22px',
           alignItems: 'center',
           flexWrap: 'nowrap',
         }}
