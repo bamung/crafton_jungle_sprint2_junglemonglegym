@@ -16,7 +16,6 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
         width: "100%",
         minHeight: "480px",
         background: "transparent",
-        zIndex: 10
       }}
     >
       <img
@@ -30,7 +29,7 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
           margin: "0 auto",
           background: "transparent",
           borderRadius: "35px",
-          zIndex: 10,
+          zIndex: 1,
           position: "relative"
         }}
       />
@@ -38,123 +37,123 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
       <button
         onClick={() => handlePartClick('어깨')}
         style={{
-          position: "absolute", top: "47%", left: "10%",
+          position: "absolute", top: "53%", left: "17%",
           display: "flex", alignItems: "center",
           background: "transparent", border: "none",
-          padding: 0, margin: 0, cursor: "pointer", outline: "none"
+          padding: 0, margin: 0, cursor: "pointer", outline: "none", zIndex: 20
         }}
         aria-label="어깨"
         tabIndex={0}
       >
         <span style={{
           marginBottom: "20px", color: "#e74c3c", fontWeight: "bold",
-          fontSize: "1rem", marginLeft: "4px"
+          fontSize: "1.5rem", marginLeft: "4px", zIndex: 20
         }}>어깨</span>
         <div style={{
           marginLeft: "3px", marginBottom: "10px", width: "15px", height: "3px",
-          transform: "rotate(25deg)", background: "#e74c3c"
+          transform: "rotate(25deg)", background: "#e74c3c", zIndex: 20
         }}></div>
         <div style={{
-          width: "36px", height: "25px", borderRadius: "50%",
+          width: "60px", height: "30px", borderRadius: "50%",
           background: "transparent", border: "3px solid #e74c3c",
-          marginLeft: "-2px", zIndex: 2
+          marginLeft: "-2px", zIndex: 20
         }}/>
       </button>
       {/* 등 */}
       <button
         onClick={() => handlePartClick('등')}
         style={{
-          position: "absolute", top: "20%", left: "48%",
+          position: "absolute", top: "17%", left: "48%",
           display: "flex", alignItems: "center", flexDirection: "column",
           background: "transparent", border: "none", padding: 0, margin: 0,
-          cursor: "pointer", outline: "none"
+          cursor: "pointer", outline: "none", zIndex: 20
         }}
         aria-label="등"
         tabIndex={0}
       >
         <span style={{
           marginBottom: "-6px", marginRight: "7px", color: "#e74c3c",
-          fontWeight: "bold", fontSize: "1rem"
+          fontWeight: "bold", fontSize: "1.5rem", zIndex: 20
         }}>등</span>
         <div style={{
           marginLeft: "5px", marginTop: "10px", width: "15px", height: "3px",
-          transform: "rotate(70deg)", background: "#e74c3c"
+          transform: "rotate(70deg)", background: "#e74c3c", zIndex: 20
         }}></div>
       </button>
       {/* 가슴 */}
       <button
         onClick={() => handlePartClick('가슴')}
         style={{
-          position: "absolute", top: "51%", left: "46%",
+          position: "absolute", top: "58%", left: "44.5%",
           display: "flex", alignItems: "center", background: "transparent",
-          border: "none", padding: 0, margin: 0, cursor: "pointer", outline: "none"
+          border: "none", padding: 0, margin: 0, cursor: "pointer", outline: "none", zIndex: 20
         }}
         aria-label="가슴"
         tabIndex={0}
       >
         <div style={{
-          width: "36px", height: "26px", borderRadius: "50%",
+          width: "60px", height: "30px", borderRadius: "50%",
           background: "transparent", border: "3px solid #e74c3c",
-          marginRight: "-2px", zIndex: 2
+          marginRight: "-2px", zIndex: 20
         }}/>
         <div style={{
-          marginRight: "2px", marginBottom: "10px", width: "25px", height: "3px",
-          transform: "rotate(160deg)", background: "#e74c3c"
+          marginRight: "2px", marginBottom: "20px", width: "25px", height: "3px",
+          transform: "rotate(160deg)", background: "#e74c3c", zIndex: 20
         }}></div>
         <span style={{
-          marginBottom: "20px", color: "#e74c3c", fontWeight: "bold",
-          fontSize: "1rem", marginLeft: "4px"
+          marginBottom: "30px", color: "#e74c3c", fontWeight: "bold",
+          fontSize: "1.5rem", marginLeft: "4px", zIndex: 20
         }}>가슴</span>
       </button>
       {/* 팔 */}
       <button
         onClick={() => handlePartClick('팔')}
         style={{
-          position: "absolute", top: "56%", left: "65%",
+          position: "absolute", top: "65%", left: "68%",
           display: "flex", alignItems: "center", background: "transparent", border: "none",
-          padding: 0, margin: 0, cursor: "pointer", outline: "none"
+          padding: 0, margin: 0, cursor: "pointer", outline: "none", zIndex: 20
         }}
         aria-label="팔"
         tabIndex={0}
       >
         <div style={{
-          width: "36px", height: "26px", borderRadius: "50%",
+          width: "60px", height: "30px", borderRadius: "50%",
           background: "transparent", border: "3px solid #e74c3c",
-          marginRight: "-2px", zIndex: 2
+          marginRight: "-2px", zIndex: 20
         }}/>
         <div style={{
           marginRight: "2px", marginTop: "10px", width: "18px", height: "3px",
-          transform: "rotate(200deg)", background: "#e74c3c"
+          transform: "rotate(200deg)", background: "#e74c3c", zIndex: 20
         }}></div>
         <span style={{
           marginTop: "20px", color: "#e74c3c", fontWeight: "bold",
-          fontSize: "1rem", marginLeft: "2px"
+          fontSize: "1.5rem", marginLeft: "2px", zIndex: 20
         }}>팔</span>
       </button>
       {/* 하체 */}
       <button
         onClick={() => handlePartClick('하체')}
         style={{
-          position: "absolute", top: "65%", left: "35%",
+          position: "absolute", top: "80%", left: "34%",
           display: "flex", alignItems: "center", flexDirection: "column",
           background: "transparent", border: "none", padding: 0, margin: 0,
-          cursor: "pointer", outline: "none"
+          cursor: "pointer", outline: "none", zIndex: 20
         }}
         aria-label="하체"
         tabIndex={0}
       >
         <div style={{
-          width: "36px", height: "26px", borderRadius: "50%",
+          width: "60px", height: "30px", borderRadius: "50%",
           background: "transparent", border: "3px solid #e74c3c",
-          marginBottom: "5px", zIndex: 2
+          marginBottom: "5px", zIndex: 20
         }}/>
         <div style={{
           marginLeft: "8px", width: "15px", height: "3px",
-          transform: "rotate(70deg)", background: "#e74c3c"
+          transform: "rotate(70deg)", background: "#e74c3c", zIndex: 20
         }}></div>
         <span style={{
           marginTop: "8px", color: "#e74c3c", fontWeight: "bold",
-          fontSize: "1rem", marginLeft: "15px"
+          fontSize: "1.5rem", marginLeft: "15px", zIndex: 20
         }}>하체</span>
       </button>
     </div>
