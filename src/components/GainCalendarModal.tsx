@@ -53,7 +53,7 @@ const styles: { [key: string]: CSSProperties } = {
     height: "min(92vh,940px)",
     background: "#FAF4E4",
     borderRadius: 18,
-    outline: "5px solid #e3bd8bff",
+    outline: "5px solid #7e5a3e",
     boxShadow: "0 10px 28px rgba(218, 209, 196, 0.12)",
     zIndex: 2001,
     display: "grid",
@@ -75,14 +75,14 @@ const styles: { [key: string]: CSSProperties } = {
     fontWeight: 800,
     fontSize: 20,
     borderRadius: 14,
-    border: "5px solid #ecdbc2",
+    border: "5px solid #7e5a3e",
     textShadow: "0 1px rgba(255,255,255,0.4)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis"
   },
   navBtn: {
-    border: "4px solid #ecdbc2",
+    border: "4px solid #7e5a3e",
     background: "#FAF4E4",
     borderRadius: 12,
     padding: "8px 12px",
@@ -94,7 +94,7 @@ const styles: { [key: string]: CSSProperties } = {
     height: 36,
     borderRadius: "9999px",
     background: "#FAF4E4",
-    border: "4px solid #C2B4A2",
+    border: "4px solid #7e5a3e",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -118,17 +118,23 @@ const styles: { [key: string]: CSSProperties } = {
     textAlign: "center",
     padding: "8px 0",
     borderRadius: 12,
-    border: "4px solid #ecdbc2",
+    border: "4px solid #7e5a3e",
     background: "#fffbe8",
     fontWeight: 800,
     fontSize: 17,
-    color: "#a99e7e"
+    color: "#a99e7e",
+    textShadow: `
+    -1px -1px 0 #000000ff,
+     1px -1px 0 #000000ff,
+    -1px  1px 0 #000000ff,
+     1px  1px 0 #000000ff
+  `
   },
   daysWrap: { minHeight: 0, height: "100%" },
   cell: {
     position: "relative",
     borderRadius: 16,
-    border: "4px solid #ecdbc2",
+    border: "4px solid #7e5a3e",
     background: "linear-gradient(180deg, #fffbe8 85%, #f7e8c5 100%)",
     display: "flex",
     alignItems: "flex-start",
@@ -145,7 +151,8 @@ const styles: { [key: string]: CSSProperties } = {
   },
   dayNumber: {
     fontWeight: 800,
-    color: "#b49a7f"
+    color: "#b49a7f",
+    fontSize: 20
   },
   checkBtn: {
     position: "absolute", right: 8, bottom: 8,

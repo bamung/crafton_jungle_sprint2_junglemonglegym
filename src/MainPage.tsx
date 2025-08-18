@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import HeaderInfo from './components/HeaderInfo';
-import MainButtonGroup from './components/MainButtonGroup';
+import LeftButtonGroup from './components/LeftButtonGroup';
+import RightButtonGroup from './components/RightButtonGroup';
 import MonggleImageArea from './components/MonggleImageArea';
 import DailyStatusButtons from './components/DailyStatusButtons';
 import GainCalendarModal from './components/GainCalendarModal';
 import WeeklyDietMemoModal from './components/WeeklyDietMemoModal';  // 새로 만든 일기 팝업
 import type { BodyPart } from './components/MonggleImageArea';  // BodyPart 타입 import
 
+
 function MainPage(){
-  const [showDiaryPopup, setShowDiaryPopup] = useState(false);  // WeeklyDietMemoModal 열림 상태 관리
+  const [showDiaryPopup, setShowDiaryPopup] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleIconClick = (name: string): void => {
@@ -25,9 +27,9 @@ function MainPage(){
 
   useEffect(() => {
     if (showDiaryPopup || calendarOpen) {
-      document.body.style.overflow = 'hidden';  // 스크롤 잠금
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';        // 스크롤 해제
+      document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
@@ -50,34 +52,36 @@ function MainPage(){
   return (
     <div
       style={{
-        maxWidth: "1500px",
-        margin: "0 auto",
-        padding: "28px 10px 10px 10px",
-        textAlign: "center",
-        position: "relative",
-        minHeight: "100vh",
+        maxWidth: '1500px',
+        margin: '0 auto',
+        padding: '28px 10px 10px 10px',
+        textAlign: 'center',
+        position: 'relative',
+        minHeight: '90vh',
         fontFamily: "'BMJUA', sans-serif"
       }}
     >
       <HeaderInfo todayString={todayString} />
 
-      <div style={{ display: "flex", justifyContent: "space-between", margin: "30px 0 22px" }}>
-        <MainButtonGroup handleIconClick={handleIconClick} />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          margin: '80px 0 22px',
+          alignItems: 'center',
+          flexWrap: 'nowrap',  // 줄 바꿈 금지로 한 줄 유지
+        }}
+      >
+        {/* 버튼 그룹에 버튼 크기 스타일 전달 */}
+        <LeftButtonGroup onClick={handleIconClick} buttonSize="12vw" minSize={48} maxSize={80} />
         <MonggleImageArea handlePartClick={handlePartClick} />
+        <RightButtonGroup onClick={handleIconClick} buttonSize="12vw" minSize={48} maxSize={80} />
       </div>
 
       <DailyStatusButtons handleIconClick={handleIconClick} />
 
-      {/* 기존 DiaryPopup 대신 새로 만든 WeeklyDietMemoModal */}
-      <WeeklyDietMemoModal
-        isOpen={showDiaryPopup}
-        onClose={() => setShowDiaryPopup(false)}
-      />
-
-      <GainCalendarModal
-        isOpen={calendarOpen}
-        onClose={() => setCalendarOpen(false)}
-      />
+      <WeeklyDietMemoModal isOpen={showDiaryPopup} onClose={() => setShowDiaryPopup(false)} />
+      <GainCalendarModal isOpen={calendarOpen} onClose={() => setCalendarOpen(false)} />
     </div>
   );
 }

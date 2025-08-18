@@ -1,3 +1,4 @@
+
 :root {
   color-scheme: light dark;
   color: rgba(0, 0, 0, 0.87); /* 다크모드도 대비 좋게 변경 */
@@ -46,7 +47,6 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
 }
