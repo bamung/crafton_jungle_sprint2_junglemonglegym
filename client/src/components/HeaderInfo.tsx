@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAuth } from '@/store/auth';     // ✅ 스토어 구독
+import { daysSince } from '@/utils/daysSince';
 
 type HeaderInfoProps = {
   todayString: string;
@@ -6,6 +8,13 @@ type HeaderInfoProps = {
 };
 
 function HeaderInfo({ todayString, onLogout }: HeaderInfoProps) {
+  const user = useAuth((s) => s.user);      // ✅ user 변화에 반응 (리렌더 유도)
+  const signupDate =
+    user?.createdAt ||
+    (typeof window !== "undefined" ? localStorage.getItem("signupDate") ?? undefined : undefined);
+
+  const dday = signupDate ? daysSince(signupDate) : 0;
+
   return (
     <div
       style={{
@@ -15,7 +24,9 @@ function HeaderInfo({ todayString, onLogout }: HeaderInfoProps) {
       }}
     >
       <div style={{ textAlign: "left", minWidth: "120px" }}>
-        <div style={{ fontSize: "2.0rem", fontWeight: "bold", color: "#65CFC7" }}>D+32</div>
+        <div style={{ fontSize: "2.0rem", fontWeight: "bold", color: "#65CFC7" }}>
+          D+{dday}
+          </div>
         <div style={{ fontSize: "0.98rem", marginTop: "2px" }}>{todayString}</div>
       </div>
 

@@ -1,3 +1,4 @@
+// client/src/pages/RegisterPage.tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
@@ -21,8 +22,23 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await api.register({ name, email, password, confirm });
-      // ✅ 자동 로그인하지 않고 로그인 페이지로 이동
+      // 회원가입 요청
+      const res: any = await api.register({ name, email, password, confirm });
+
+      // ✅ 가입일 저장 (응답에 createdAt이 있으면 그 값, 없으면 현재시각)
+      const createdAtFromResponse =
+        res?.data?.user?.createdAt ??
+        res?.user?.createdAt ??
+        res?.createdAt ??
+        null;
+
+      const createdAtISO = createdAtFromResponse
+        ? new Date(createdAtFromResponse).toISOString()
+        : new Date().toISOString();
+
+      localStorage.setItem("signupDate", createdAtISO);
+
+      // ✅ 자동 로그인 없이 로그인 페이지로 이동
       nav("/login", { replace: true /* , state: { justRegistered: true, email } */ });
     } catch (e: any) {
       setErr(e?.message || "회원가입에 실패했습니다.");

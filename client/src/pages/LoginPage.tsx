@@ -1,3 +1,4 @@
+// client/src/pages/LoginPage.tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
@@ -24,13 +25,33 @@ export default function LoginPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // ✅ D+용: ObjectId → ISO 복원 헬퍼 (createdAt이 없을 때 대비)
+  const oidToISO = (id?: string) => {
+    if (!id || id.length < 8) return null;
+    const ts = parseInt(id.slice(0, 8), 16);
+    return Number.isNaN(ts) ? null : new Date(ts * 1000).toISOString();
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
     setLoading(true);
     try {
       const { token, user } = await api.login({ email, password });
+
+      // 전역 상태 저장
       setAuth(token, user || null);
+
+      // ✅ D+용: 가입일 로컬 저장 (응답 createdAt → ObjectId 순서로 보강)
+      const createdAtISO =
+        (user?.createdAt ? new Date(user.createdAt).toISOString() : null) ||
+        oidToISO((user as any)?._id || (user as any)?.id) ||
+        null;
+
+      if (createdAtISO) {
+        localStorage.setItem("signupDate", createdAtISO);
+      }
+
       nav("/", { replace: true });
     } catch (e: any) {
       setErr(e?.message || "로그인에 실패했습니다.");
@@ -151,8 +172,8 @@ const styles: Record<string, React.CSSProperties> = {
     outline: "none",
     fontSize: 16,
     boxShadow: "2px 2px 0 #1f2937",
-    color: "#111827",       // ← 글자색 진하게
-    caretColor: "#111827",  // ← 커서색
+    color: "#111827",
+    caretColor: "#111827",
   },
   error: { marginTop: 4, color: "crimson", fontWeight: 800 },
   submitBtn: { marginTop: 6, padding: "13px 14px", borderRadius: 14, border: "2px solid #1f2937", background: "#111827", color: "#fff", fontWeight: 900, fontSize: 16, cursor: "pointer", boxShadow: "2px 2px 0 #1f2937" },

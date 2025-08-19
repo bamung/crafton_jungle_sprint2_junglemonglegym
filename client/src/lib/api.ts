@@ -35,6 +35,7 @@ async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
   return (await res.text()) as unknown as T;
 }
 
+/** ---------- Auth & Me ---------- */
 export const api = {
   // 여러 백엔드 스키마를 커버하도록 키를 넉넉히 보냅니다.
   register: (body: { name: string; email: string; password: string; confirm?: string }) => {
@@ -74,16 +75,36 @@ export const api = {
     }),
 
   me: () => req<any>("/auth/me", { method: "GET" }),
+
+  /** ---------- Daily helpers (GainCalendar에서 사용) ---------- */
+  // 로컬(사용자) 기준 'YYYY-MM-DD' 문자열 생성
+  toYMD: (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  },
+
+  // 해당 날짜 상태 조회 (GET /daily/:date)
+  getDaily: (dateKey: string) =>
+    req(`/daily/${dateKey}`, { method: "GET" }),
+
+  // 운동 여부 저장 전용 (PUT /daily/:date, body: { didWorkout })
+  setDidWorkout: (dateKey: string, didWorkout: boolean) =>
+    req(`/daily/${dateKey}`, {
+      method: "PUT",
+      body: JSON.stringify({ didWorkout }),
+    }),
 };
 
-// Daily
+/** ---------- Raw Daily API (기존 유지) ---------- */
 export const dailyApi = {
   get: (dateKey: string) => req(`/daily/${dateKey}`, { method: "GET" }),
   save: (dateKey: string, body: any) =>
     req(`/daily/${dateKey}`, { method: "PUT", body: JSON.stringify(body) }),
 };
 
-// Weights
+/** ---------- Weights ---------- */
 export const weightApi = {
   list: (from?: string, to?: string) => {
     const p = new URLSearchParams();
@@ -96,9 +117,27 @@ export const weightApi = {
     req(`/weights/${dateKey}`, { method: "PUT", body: JSON.stringify(body) }),
 };
 
-// Diet Memo
+/** ---------- Diet Memo ---------- */
 export const dietMemoApi = {
   get: (weekStart: string) => req(`/diet-memo/${weekStart}`, { method: "GET" }),
   save: (weekStart: string, body: any) =>
     req(`/diet-memo/${weekStart}`, { method: "PUT", body: JSON.stringify(body) }),
+};
+
+export const diaryApi = {
+  // 단일 날짜 조회
+  get: (dateKey: string) => req(`/diary/${dateKey}`, { method: "GET" }),
+
+  // 단일 날짜 저장
+  save: (dateKey: string, body: { title?: string; content: string }) =>
+    req(`/diary/${dateKey}`, { method: "PUT", body: JSON.stringify(body) }),
+
+  // 범위 조회(옵션) — 월간 뷰
+  list: (from?: string, to?: string) => {
+    const p = new URLSearchParams();
+    if (from) p.set("from", from);
+    if (to) p.set("to", to);
+    const qs = p.toString() ? `?${p.toString()}` : "";
+    return req(`/diary${qs}`, { method: "GET" });
+  },
 };

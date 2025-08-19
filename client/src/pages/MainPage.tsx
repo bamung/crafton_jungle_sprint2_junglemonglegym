@@ -34,6 +34,9 @@ export default function MainPage() {
     } else if (name === '득근캘린더') {
       setCalendarOpen(true);
       setShowDiaryPopup(false);
+    } else if (name === '몽글이 뱃지') {
+    // 아무 동작도 하지 않음
+    // LeftButtonGroup 내부에서 모달 열기 처리됨
     } else {
       alert(`"${name}" 기능은 추후 연결됩니다!`);
     }

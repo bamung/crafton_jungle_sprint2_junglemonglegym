@@ -4,13 +4,14 @@ import cors from "cors";
 import morgan from "morgan";
 import mongoose from "mongoose";
 
+
 // 라우터들(전부 default export여야 함)
 import authRouter from "./routes/auth";          // 말랑핏 기존 auth 라우터
 import meRouter from "./routes/me";              // /api/auth/me
 import dailyRouter from "./routes/daily";        // 데일리 상태
 import weightsRouter from "./routes/weights";    // 체중 기록
 import dietMemoRouter from "./routes/dietMemo";  // 주간 식단 메모
-
+import diaryRouter from "./routes/diary";
 const app = express();
 
 // CORS
@@ -26,6 +27,7 @@ app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 // ---- 라우트 마운트 (중요: 함수 호출하지 말고 그대로 전달) ----
 app.use("/api/auth", authRouter);
 app.use("/api/auth", meRouter);
+app.use("/api", diaryRouter);
 
 app.use("/api", dailyRouter);
 app.use("/api", weightsRouter);

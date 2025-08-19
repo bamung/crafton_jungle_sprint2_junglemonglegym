@@ -1,5 +1,8 @@
+// client/src/components/GainCalendarModal.tsx
 import { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
+import { api } from "../lib/api";           // ✅ 서버 API(getDaily, setDidWorkout, toYMD)
+import { useAuth } from "../store/auth";    // ✅ 토큰 구독
 
 const REWARD_DAYS = 15;
 /* 반응형/크기 오버라이드 CSS */
@@ -233,7 +236,11 @@ export default function GainCalendarModal({ isOpen, onClose }: GainCalendarModal
     return new Date(n.getFullYear(), n.getMonth(), 1);
   });
 
+  // 월별 체크(일 번호 Set)
   const [checksByMonth, setChecksByMonth] = useState<Record<string, Set<number>>>({});
+  const [monthLoading, setMonthLoading] = useState(false); // ✅ 월 데이터 로딩 표시용
+
+  const token = useAuth((s) => s.token); // ✅ 토큰 구독
 
   useEffect(() => {
     if (isOpen) {
@@ -246,8 +253,54 @@ export default function GainCalendarModal({ isOpen, onClose }: GainCalendarModal
   const monthSet = checksByMonth[key] ?? new Set();
   const cells = buildCells(viewDate.getFullYear(), viewDate.getMonth());
 
-  const toggleDay = (day: number | null) => {
+  // ✅ 월 진입/변경/토큰 준비 시 서버에서 월 데이터 하이드레이트
+  useEffect(() => {
+    if (!isOpen || !token) return; // 토큰 없으면 호출하지 않음
+    let canceled = false;
+    const loadMonth = async () => {
+      setMonthLoading(true);
+      try {
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const set = new Set<number>();
+
+        // 간단하게 순차 호출 (필요하면 병렬/쓰로틀 적용 가능)
+        type DailyResponse = { didWorkout?: boolean };
+        for (let d = 1; d <= daysInMonth; d++) {
+          const ymd = api.toYMD(new Date(year, month, d));
+          try {
+            const data = await api.getDaily(ymd) as DailyResponse;
+            if (canceled) return;
+            if (data?.didWorkout) set.add(d);
+          } catch {
+            // 무시 (개별 실패)
+          }
+        }
+
+        if (!canceled) {
+          setChecksByMonth((prev) => ({ ...prev, [key]: set }));
+        }
+      } finally {
+        if (!canceled) setMonthLoading(false);
+      }
+    };
+    loadMonth();
+    return () => { canceled = true; };
+    // key(=연월), token, isOpen이 바뀔 때 재조회
+  }, [key, token, isOpen, viewDate]);
+
+  const toggleDay = async (day: number | null) => {
     if (day == null) return;
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    const ymd = api.toYMD(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
+
+    // 낙관적 업데이트
     setChecksByMonth((prev) => {
       const copy = { ...prev };
       const cur = new Set(copy[key] ?? []);
@@ -256,6 +309,21 @@ export default function GainCalendarModal({ isOpen, onClose }: GainCalendarModal
       copy[key] = cur;
       return copy;
     });
+
+    try {
+      const willBe = !monthSet.has(day); // 토글 후 상태
+      await api.setDidWorkout(ymd, willBe);
+    } catch {
+      // 실패 시 롤백
+      setChecksByMonth((prev) => {
+        const copy = { ...prev };
+        const cur = new Set(copy[key] ?? []);
+        if (cur.has(day)) cur.delete(day);
+        else cur.add(day);
+        copy[key] = cur;
+        return copy;
+      });
+    }
   };
 
   const prevMonth = (): void => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
@@ -289,6 +357,7 @@ export default function GainCalendarModal({ isOpen, onClose }: GainCalendarModal
           </button>
           <div id="gain-calendar-title" className="gc-title" style={styles.title}>
             {viewDate.getFullYear()}.{String(viewDate.getMonth() + 1).padStart(2, "0")} 득근 캘린더
+            {monthLoading ? " · 불러오는 중..." : ""}
           </div>
           <button aria-label="다음 달" onClick={nextMonth} style={styles.navBtn}>
             ▶
@@ -316,7 +385,7 @@ export default function GainCalendarModal({ isOpen, onClose }: GainCalendarModal
               style={{
                 ...styles.weekdayCell,
                 color: weekdayColors[idx],
-                borderColor: weekdayColors[idx], // 테두리까지 적용하면 더욱 그림 느낌
+                borderColor: weekdayColors[idx],
                 background: "#FAF4E4"
               }}
             >

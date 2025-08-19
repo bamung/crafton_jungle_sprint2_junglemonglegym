@@ -1,19 +1,14 @@
-/* 고령딸기체 */
-@font-face {
-  font-family: 'GoryeongStrawberry';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/GoryeongStrawberry.woff2') format('woff2');
-  font-weight: normal; font-style: normal; font-display: swap;
-}
+
+
 
 :root{
   --ink:#7e7058; --paper:#f7ecd2; --paper-light:#fffaf0;
   --line:#ffae00; --card:#ffffff; --shadow:0 10px 24px rgba(0,0,0,.08);
   --mint:#9bd5cf;
 }
-
 /* Backdrop & Modal shell */
 .backdrop{
-  position: fixed; inset: 0; background: rgba(0,0,0,.35);
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35);
   display: grid; place-items: center; z-index: 1000;
 }
 .modal{
@@ -28,7 +23,15 @@
   box-shadow: var(--shadow);
   font-family: 'GoryeongStrawberry', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
-
+/* [추가] 모달 내부 텍스트가 전역 스타일에 가려지지 않도록 고정 */
+.modal *{
+  color: inherit;
+  -webkit-text-fill-color: currentColor; /* Chrome/Safari에서 색 보장 */
+  /* 전역에 background-clip:text; color:transparent;가 있다면 아래 두 줄 주석 해제
+  background: none !important;
+  -webkit-background-clip: initial !important; background-clip: initial !important;
+  */
+}
 /* Hero */
 .hero{
   position: relative;
@@ -39,17 +42,78 @@
 .h1{ margin: 0; font-size: 38px; letter-spacing: .5px; }
 .meta{ display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .pill{
-  background:#fff; border:2px solid var(--line); padding:8px 12px; border-radius:999px; box-shadow:var(--shadow);
+  background:#ffffff; border:2px solid var(--line); padding:8px 12px; border-radius:999px; box-shadow:var(--shadow);
   display:flex; align-items:center; gap:8px;
 }
-.pill input{
-  border:2px solid var(--line); border-radius:12px; padding:6px 10px; background:#fff; font-family:inherit;
+.closeBtn{
+  margin-left: auto;
+  border:2px solid var(--line);
+  background:#fff;
+  border-radius:10px;
+  padding:6px 10px;
+  cursor:pointer;
+  /* X 색상 여기서 지정 */
+  color: red;                 /* 필요 시 #FF5A5F 처럼 원하는 색으로 변경 */
+  -webkit-text-fill-color: red;
+  font-weight:800;
+  line-height:1;
+}
+/* 1) '운동 시작일' 라벨/입력 가독성 강화 */
+.pill label{
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+.pill input[type="date"]{
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  background: #fff;
+  color-scheme: light;          /* 다크모드에서도 흰 배경/진한 글자 유지 */
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+}
+/* 캘린더 아이콘도 보이게 */
+.pill input[type="date"]::-webkit-calendar-picker-indicator{
+  filter: none;
+  opacity: .9;
+}
+/* 2) '저장' 버튼 글자 흰색 */
+.pill button{
+  background: #1F1F1F;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-weight: 800;
+}
+/* 3) 닫기 버튼 둥글둥글 + 색 유지(빨강) */
+.closeBtn{
+  width: 40px; height: 40px;
+  border-radius: 999px;               /* 완전 동그라미 */
+  display: grid; place-items: center; /* 가운데 정렬 */
+  border: 2px solid var(--line);
+  background: #fff;
+  color: red;                          /* 원하던 색 유지 */
+  -webkit-text-fill-color: red;
+  font-size: 20px; font-weight: 700; line-height: 1;
+}
+.closeBtn:hover,
+.closeBtn:focus{
+  background: rgba(255, 174, 0, 0.08);
+  outline: none;
+}
+.closeBtn:hover,
+.closeBtn:focus{
+  background: rgba(255, 174, 0, 0.08); /* 살짝 하이라이트 */
+  outline: none;
 }
 .closeBtn{
   margin-left: auto;
   border:2px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; cursor:pointer;
 }
-
 /* Box sections */
 .box{
   background:var(--card); border:2px solid var(--line); border-radius:22px; padding:20px;
@@ -60,7 +124,6 @@
   background:var(--card); border:2px solid var(--line);
   border-radius:20px; padding:18px; box-shadow:var(--shadow);
 }
-
 /* Badge grid */
 .badgeGrid{
   display:grid;
@@ -86,14 +149,16 @@
 .progress i{ display:block; height:100%; width:0; background:var(--mint); }
 .locked .thumb img{ filter:grayscale(1) blur(1px) opacity(.45); }
 .locked::after{
-  content:'🔒'; position:absolute; right:10px; bottom:10px; font-size:18px; opacity:.95;
+  content:':자물쇠:'; position:absolute; right:10px; bottom:10px; font-size:18px; opacity:.95;
 }
-
 /* Minis */
 .miniToolbar{ display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
 .miniToolbar button{
   font-family:inherit; font-size:18px; border:2px solid var(--line);
   background:#fff; padding:8px 14px; border-radius:14px; cursor:pointer;
+  /* [추가] 버튼 라벨 보이도록 */
+  color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
 }
 .miniGrid{
   display:grid; gap:14px; grid-template-columns:repeat(auto-fit, minmax(110px,1fr));
@@ -104,7 +169,6 @@
 }
 .slot img{ max-width:90%; max-height:90%; transition:.2s; }
 .slot.locked::after{ content:'?'; font-size:36px; color:#6d6d6d; }
-
 /* Toast */
 .toast{
   position:fixed; left:50%; bottom:24px; transform:translateX(-50%);

@@ -1,90 +1,175 @@
-import{ useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { api, diaryApi } from "../lib/api";
+import { useAuth } from "../store/auth";
 
-const NAMES = ['일','월','화','수','목','금','토'];
+const NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 const fmt = (y: number, m: number, d: number): string =>
-  `${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')}`;
+  `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")}`;
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay();
+  const day = d.getDay(); // 일(0) 시작
   d.setDate(d.getDate() - day);
-  d.setHours(0,0,0,0);
+  d.setHours(0, 0, 0, 0);
   return d;
 }
 
 function weekDates(anchor: Date): Date[] {
   const start = startOfWeek(anchor);
-  return Array.from({length:7}, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+  return Array.from(
+    { length: 7 },
+    (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
+  );
 }
 
 type WeekDataItem = {
-  date: string;
+  date: string;   // 'YYYY-MM-DD' (로컬 기준)
   weekday: number;
   diet: string;
   memo: string;
 };
 
-async function fetchWeeklyDietData(anchor: Date): Promise<WeekDataItem[]> {
-  const dates = weekDates(anchor);
-  return dates.map(d => ({
-    date: d.toISOString().slice(0,10),
-    weekday: d.getDay(),
-    diet: "",
-    memo: "",
-  }));
-}
-
-async function updateDayDiet(dateStr: string, data: { diet: string; memo: string }): Promise<boolean> {
-  console.log(`업데이트 요청: ${dateStr}`, data);
-  return true;
-}
+// content(JSON 문자열) ↔ 객체
+const parseContent = (s?: string) => {
+  try {
+    return s ? JSON.parse(s) : {};
+  } catch {
+    return {};
+  }
+};
 
 type WeeklyDietMemoModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-export default function WeeklyDietMemoModal({ isOpen, onClose }: WeeklyDietMemoModalProps){
+export default function WeeklyDietMemoModal({
+  isOpen,
+  onClose,
+}: WeeklyDietMemoModalProps) {
   const [anchor, setAnchor] = useState<Date>(new Date());
   const [weekData, setWeekData] = useState<WeekDataItem[]>([]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    async function loadData() {
-      const data = await fetchWeeklyDietData(anchor);
-      setWeekData(data);
-    }
-    loadData();
-  }, [isOpen, anchor]);
+  const [loading, setLoading] = useState(false);
+  const token = useAuth((s) => s.token); // ✅ 토큰 준비 후만 API 호출
 
   const dates = weekDates(anchor);
-  const rangeStr = `${fmt(dates[0].getFullYear(), dates[0].getMonth() + 1, dates[0].getDate())} ~ ${fmt(dates[6].getFullYear(), dates[6].getMonth() + 1, dates[6].getDate())}`;
+  const rangeStr = `${fmt(
+    dates[0].getFullYear(),
+    dates[0].getMonth() + 1,
+    dates[0].getDate()
+  )} ~ ${fmt(
+    dates[6].getFullYear(),
+    dates[6].getMonth() + 1,
+    dates[6].getDate()
+  )}`;
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const todayKey = api.toYMD(new Date());
 
-  const onChangeField = (index: number, field: keyof Pick<WeekDataItem, "diet" | "memo">, value: string) => {
-    setWeekData(prev => {
-      const newData = [...prev];
-      newData[index] = { ...newData[index], [field]: value };
-      updateDayDiet(newData[index].date, { diet: newData[index].diet, memo: newData[index].memo });
-      return newData;
+  // 최신 상태를 디바운스 타이머에서 안전하게 참조하기 위한 ref
+  const weekDataRef = useRef<WeekDataItem[]>(weekData);
+  useEffect(() => {
+    weekDataRef.current = weekData;
+  }, [weekData]);
+
+  // 주간 데이터 로드
+  useEffect(() => {
+    if (!isOpen || !token) return;
+
+    const keys = dates.map((d) => api.toYMD(d));
+    const from = keys[0];
+    const to = keys[keys.length - 1];
+
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      try {
+        // 서버에서 주간 범위 한번에 가져오기
+        const list = await diaryApi.list(from, to); // [{ date, content, ... }, ...]
+        if (!alive) return;
+
+        // date → {diet,memo} 맵
+        const map = new Map<string, { diet?: string; memo?: string }>();
+        const arr = Array.isArray(list) ? list : [];
+        for (const doc of arr) {
+          const c = parseContent(doc?.content);
+          map.set(doc.date, { diet: String(c?.diet ?? ""), memo: String(c?.memo ?? "") });
+        }
+
+        // 주간 7개 셀 채우기
+        const next: WeekDataItem[] = dates.map((d) => {
+          const key = api.toYMD(d);
+          const base = map.get(key) || {};
+          return {
+            date: key,
+            weekday: d.getDay(),
+            diet: base.diet ?? "",
+            memo: base.memo ?? "",
+          };
+        });
+
+        setWeekData(next);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [isOpen, token, anchor]); // 주간/열림/토큰이 바뀌면 재조회
+
+  // 디바운스 저장 타이머
+  const timers = useRef<Record<string, number>>({});
+
+  // 입력 변경 + 저장
+  const onChangeField = (
+    index: number,
+    field: keyof Pick<WeekDataItem, "diet" | "memo">,
+    value: string
+  ) => {
+    // 1) 화면 즉시 반영
+    setWeekData((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
     });
+
+    // 2) 디바운스 저장
+    const dayKey = weekDataRef.current[index]?.date || api.toYMD(dates[index]);
+    if (timers.current[dayKey]) window.clearTimeout(timers.current[dayKey]);
+
+    timers.current[dayKey] = window.setTimeout(async () => {
+      try {
+        const current = weekDataRef.current.find((x) => x.date === dayKey) || {
+          diet: "",
+          memo: "",
+        };
+        const payload = {
+          title: "",
+          content: JSON.stringify({
+            diet: current.diet || "",
+            memo: current.memo || "",
+          }),
+        };
+        await diaryApi.save(dayKey, payload);
+        // console.log("saved", dayKey, payload);
+      } catch (err) {
+        console.error("Diary save failed", err);
+      }
+    }, 400);
   };
 
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if(e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, onClose]);
 
-  if(!isOpen) return null;
+  if (!isOpen) return null;
 
   return (
     <>
@@ -101,7 +186,7 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }: WeeklyDietMemoM
       <div
         role="dialog"
         aria-modal="true"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         tabIndex={-1}
         style={{
           position: "fixed",
@@ -148,11 +233,13 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }: WeeklyDietMemoM
                 textOverflow: "ellipsis",
               }}
             >
-              몽글이 일기장
+              몽글이 일기장 {loading ? "· 불러오는 중…" : ""}
             </h2>
             <button
               aria-label="이전 주"
-              onClick={() => setAnchor(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7))}
+              onClick={() =>
+                setAnchor((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7))
+              }
               style={{
                 border: "3px solid #7e5a3e",
                 backgroundColor: "#fff7e8",
@@ -188,7 +275,9 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }: WeeklyDietMemoM
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <button
               aria-label="다음 주"
-              onClick={() => setAnchor(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7))}
+              onClick={() =>
+                setAnchor((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7))
+              }
               style={{
                 border: "3px solid #7e5a3e",
                 backgroundColor: "#fff7e8",
@@ -243,18 +332,13 @@ export default function WeeklyDietMemoModal({ isOpen, onClose }: WeeklyDietMemoM
           </div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 14,
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
           {dates.map((d, i) => {
-            const isToday = d.getTime() === today.getTime();
+            const key = api.toYMD(d);
+            const isToday = key === todayKey;
             return (
               <section
-                key={d.toISOString()}
+                key={key}
                 style={{
                   border: "3px dashed #7e5a3e",
                   borderRadius: 14,

@@ -8,6 +8,15 @@ import { sendMail } from "../utils/mailer";
 const r = Router();
 const JWT = process.env.JWT_SECRET || "change-me";
 
+// ✅ 공통: 클라이언트로 돌려줄 user 직렬화( createdAt 포함 )
+const toUserResponse = (user: any) => ({
+  id: user._id,
+  email: user.email,
+  nickname: user.nickname,                // 기존 필드 유지
+  name: user.nickname ?? user.name,       // 프론트에서 name 참조 가능하도록 보강
+  createdAt: user.createdAt,              // ✅ 중요: D+ 계산용
+});
+
 /**
  * 회원가입
  * - 중복 이메일이면 409 + "이미 존재하는 계정입니다."
@@ -30,9 +39,12 @@ r.post("/register", async (req, res, next) => {
     const user = await User.create({ email: normEmail, passwordHash, nickname });
 
     const token = jwt.sign({ id: user._id }, JWT, { expiresIn: "7d" });
-    return res
-      .status(201)
-      .json({ token, user: { id: user._id, email: user.email, nickname: user.nickname } });
+
+    // ✅ createdAt 포함해서 응답
+    return res.status(201).json({
+      token,
+      user: toUserResponse(user),
+    });
   } catch (e: any) {
     if (e?.code === 11000) {
       return res.status(409).json({ message: "이미 존재하는 계정입니다." });
@@ -57,7 +69,12 @@ r.post("/login", async (req, res) => {
   if (!ok) return res.status(401).json({ message: "잘못된 자격증명" });
 
   const token = jwt.sign({ id: user._id }, JWT, { expiresIn: "7d" });
-  res.json({ token, user: { id: user._id, email: user.email, nickname: user.nickname } });
+
+  // ✅ createdAt 포함해서 응답
+  res.json({
+    token,
+    user: toUserResponse(user),
+  });
 });
 
 /**
@@ -127,7 +144,12 @@ r.post("/reset", async (req, res) => {
   await user.save();
 
   const jwtToken = jwt.sign({ id: user._id }, JWT, { expiresIn: "7d" });
-  res.json({ token: jwtToken, user: { id: user._id, email: user.email, nickname: user.nickname } });
+
+  // ✅ 재로그인 응답에도 createdAt 포함
+  res.json({
+    token: jwtToken,
+    user: toUserResponse(user),
+  });
 });
 
 export default r;
