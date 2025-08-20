@@ -1,6 +1,7 @@
 // client/src/lib/api.ts
 
-const BASE = import.meta.env.VITE_API_URL;
+// BASE가 비어 있으면 /api 로 기본 설정 (Vite 프록시/배포 대응)
+const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
@@ -25,7 +26,6 @@ async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
         throw new Error(t || `HTTP ${res.status}`);
       }
     } catch (e: any) {
-      // JSON 파싱 실패 대비
       throw new Error(e?.message || `HTTP ${res.status}`);
     }
   }
@@ -35,16 +35,24 @@ async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
   return (await res.text()) as unknown as T;
 }
 
+/** ---------- 공용 유틸 ---------- */
+const toQuery = (obj: Record<string, any>) => {
+  const p = new URLSearchParams();
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === "") return;
+    p.set(k, String(v));
+  });
+  const qs = p.toString();
+  return qs ? `?${qs}` : "";
+};
+
 /** ---------- Auth & Me ---------- */
 export const api = {
-  // 여러 백엔드 스키마를 커버하도록 키를 넉넉히 보냅니다.
   register: (body: { name: string; email: string; password: string; confirm?: string }) => {
     const payload = {
       email: body.email,
       password: body.password,
-      // 비번 확인을 요구하는 서버 대비
       passwordConfirm: body.confirm ?? body.password,
-      // 닉네임/유저명 관련 여러 별칭
       name: body.name,
       nickname: body.name,
       username: body.name,
@@ -63,21 +71,14 @@ export const api = {
     }),
 
   forgot: (body: { email: string }) =>
-    req<{ ok: boolean }>("/auth/forgot", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    req<{ ok: boolean }>("/auth/forgot", { method: "POST", body: JSON.stringify(body) }),
 
   reset: (body: { token: string; password: string }) =>
-    req<{ ok: boolean }>("/auth/reset", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    req<{ ok: boolean }>("/auth/reset", { method: "POST", body: JSON.stringify(body) }),
 
   me: () => req<any>("/auth/me", { method: "GET" }),
 
   /** ---------- Daily helpers (GainCalendar에서 사용) ---------- */
-  // 로컬(사용자) 기준 'YYYY-MM-DD' 문자열 생성
   toYMD: (d: Date) => {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -85,16 +86,9 @@ export const api = {
     return `${y}-${m}-${day}`;
   },
 
-  // 해당 날짜 상태 조회 (GET /daily/:date)
-  getDaily: (dateKey: string) =>
-    req(`/daily/${dateKey}`, { method: "GET" }),
-
-  // 운동 여부 저장 전용 (PUT /daily/:date, body: { didWorkout })
+  getDaily: (dateKey: string) => req(`/daily/${dateKey}`, { method: "GET" }),
   setDidWorkout: (dateKey: string, didWorkout: boolean) =>
-    req(`/daily/${dateKey}`, {
-      method: "PUT",
-      body: JSON.stringify({ didWorkout }),
-    }),
+    req(`/daily/${dateKey}`, { method: "PUT", body: JSON.stringify({ didWorkout }) }),
 };
 
 /** ---------- Raw Daily API (기존 유지) ---------- */
@@ -107,10 +101,7 @@ export const dailyApi = {
 /** ---------- Weights ---------- */
 export const weightApi = {
   list: (from?: string, to?: string) => {
-    const p = new URLSearchParams();
-    if (from) p.set("from", from);
-    if (to) p.set("to", to);
-    const qs = p.toString() ? `?${p.toString()}` : "";
+    const qs = toQuery({ from, to });
     return req(`/weights${qs}`, { method: "GET" });
   },
   save: (dateKey: string, body: any) =>
@@ -124,20 +115,122 @@ export const dietMemoApi = {
     req(`/diet-memo/${weekStart}`, { method: "PUT", body: JSON.stringify(body) }),
 };
 
+/** ---------- Diary (일기) ---------- */
 export const diaryApi = {
-  // 단일 날짜 조회
   get: (dateKey: string) => req(`/diary/${dateKey}`, { method: "GET" }),
-
-  // 단일 날짜 저장
   save: (dateKey: string, body: { title?: string; content: string }) =>
     req(`/diary/${dateKey}`, { method: "PUT", body: JSON.stringify(body) }),
-
-  // 범위 조회(옵션) — 월간 뷰
   list: (from?: string, to?: string) => {
-    const p = new URLSearchParams();
-    if (from) p.set("from", from);
-    if (to) p.set("to", to);
-    const qs = p.toString() ? `?${p.toString()}` : "";
+    const qs = toQuery({ from, to });
     return req(`/diary${qs}`, { method: "GET" });
   },
 };
+
+/** ---------- Workouts (카탈로그) ---------- */
+export type Difficulty = "easy" | "mid" | "hard";
+export type Group = "back" | "shoulder" | "chest" | "arm" | "legs" | "cardio";
+
+export type Workout = {
+  id: string;
+  title: string;
+  group: Group;
+  difficulty: Difficulty;
+  cues?: string[];
+  image?: string;
+};
+
+export const workoutApi = {
+  list: (params?: { group?: Group; difficulty?: Difficulty; q?: string }) => {
+    const qs = toQuery(params || {});
+    return req<Workout[]>(`/workouts${qs}`, { method: "GET" });
+  },
+};
+
+// 과거 호환
+export const getWorkouts = (params?: { group?: Group; difficulty?: Difficulty; q?: string }) =>
+  workoutApi.list(params);
+
+/** ---------- Favorites (즐겨찾기) ---------- */
+export const favApi = {
+  list: () => req<string[]>("/user/favorites", { method: "GET" }),
+  setAll: (ids: string[]) =>
+    req<string[]>("/user/favorites", { method: "PUT", body: JSON.stringify({ ids }) }),
+  add: (id: string) => req<string[]>(`/user/favorites/${encodeURIComponent(id)}`, { method: "POST" }),
+  remove: (id: string) =>
+    req<string[]>(`/user/favorites/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  toggle: (id: string) =>
+    req<string[]>(`/user/favorites/${encodeURIComponent(id)}/toggle`, { method: "PATCH" }),
+};
+
+/** ---------- Workout Logs (운동 기록 저장/조회) ---------- */
+export type LogSet = { weight: number; reps: number; done: boolean };
+export type LogEntry = {
+  exerciseId: string; // 서버와 동일 key 사용
+  title: string;
+  group: Group;
+  sets: LogSet[];
+  note?: string;
+};
+export type WorkoutLogDoc = {
+  userId?: string;
+  date: string; // YYYY-MM-DD
+  entries: LogEntry[];
+  durationSec: number; // 하루 누적 경과초
+  durationByGroup?: Record<string, number>; // 선택: 부위별 누적
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type CalendarDaySummary = {
+  date: string;
+  count: number;
+  sec: number;
+  // 선택: 자세한 운동명/개수 (detail=1일 때만)
+  labels?: string[];
+  more?: number;
+  // 선택: 해당 날짜에 수행한 부위 코드 배열 (groups=1일 때만)
+  groups?: Group[];
+};
+
+export const workoutLogsApi = {
+  /** 특정 날짜 기록 조회 — group을 넘기면 해당 부위만 서버가 필터/머지 */
+  get: (dateKey: string, group?: Group) => {
+    const qs = toQuery({ date: dateKey, group });
+    return req<WorkoutLogDoc | null>(`/workout-logs${qs}`, { method: "GET" });
+  },
+
+  /** 특정 날짜 기록 업서트 저장 — group을 넘기면 해당 부위 파트만 병합 저장 */
+  save: (dateKey: string, body: Partial<WorkoutLogDoc>, group?: Group) => {
+    const qs = toQuery({ group });
+    return req<WorkoutLogDoc>(`/workout-logs/${encodeURIComponent(dateKey)}${qs}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /**
+   * 월 요약(캘린더 뱃지)
+   * - 기본: [{ date, count, sec }]
+   * - opts.detail: 운동명 라벨/추가개수 포함
+   * - opts.groups: 수행 부위 코드 배열 포함 (예: ["chest","back"])
+   */
+  monthly: (monthYYYYMM: string, opts?: { detail?: boolean; groups?: boolean }) => {
+    const params: Record<string, any> = { month: monthYYYYMM };
+    if (opts?.detail) params.detail = 1;
+    if (opts?.groups) params.groups = 1;
+    const qs = toQuery(params);
+    return req<CalendarDaySummary[]>(`/workout-logs/calendar${qs}`, { method: "GET" });
+  },
+};
+
+// 별칭(호환)
+export const workoutLogApi = workoutLogsApi;
+export const getWorkoutLog = (dateKey: string, group?: Group) =>
+  workoutLogsApi.get(dateKey, group);
+export const putWorkoutLog = (dateKey: string, body: Partial<WorkoutLogDoc>, group?: Group) =>
+  workoutLogsApi.save(dateKey, body, group);
+/** @deprecated 기존 시그니처 호환: detail과 groups를 boolean으로 넘길 수 있음 */
+export const getCalendarMonth = (monthYYYYMM: string, detail = false, groups = false) =>
+  workoutLogsApi.monthly(monthYYYYMM, { detail, groups });

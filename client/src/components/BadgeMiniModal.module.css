@@ -1,6 +1,4 @@
 
-
-
 :root{
   --ink:#7e7058; --paper:#f7ecd2; --paper-light:#fffaf0;
   --line:#ffae00; --card:#ffffff; --shadow:0 10px 24px rgba(0,0,0,.08);
@@ -22,6 +20,7 @@
   color: var(--ink);
   box-shadow: var(--shadow);
   font-family: 'GoryeongStrawberry', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  z-index: 1000;
 }
 /* [추가] 모달 내부 텍스트가 전역 스타일에 가려지지 않도록 고정 */
 .modal *{
@@ -149,10 +148,10 @@
 .progress i{ display:block; height:100%; width:0; background:var(--mint); }
 .locked .thumb img{ filter:grayscale(1) blur(1px) opacity(.45); }
 .locked::after{
-  content:':자물쇠:'; position:absolute; right:10px; bottom:10px; font-size:18px; opacity:.95;
+  content:'잠금'; position:absolute; right:10px; bottom:10px; font-size:18px; opacity:.95;
 }
 /* Minis */
-.miniToolbar{ display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+.miniToolbar{ display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap; z-index: 50;}
 .miniToolbar button{
   font-family:inherit; font-size:18px; border:2px solid var(--line);
   background:#fff; padding:8px 14px; border-radius:14px; cursor:pointer;

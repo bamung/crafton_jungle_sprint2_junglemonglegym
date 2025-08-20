@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '@/store/auth';     // ✅ 스토어 구독
-import { daysSince } from '@/utils/daysSince';
+import { useAuth } from '../store/auth';     // ✅ 스토어 구독
+import { daysSince } from '../utils/daysSince';
 
 type HeaderInfoProps = {
   todayString: string;

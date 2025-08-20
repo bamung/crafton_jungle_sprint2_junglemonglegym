@@ -1,21 +1,30 @@
+// server/src/index.ts
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import mongoose from "mongoose";
 
-
-// 라우터들(전부 default export여야 함)
-import authRouter from "./routes/auth";          // 말랑핏 기존 auth 라우터
-import meRouter from "./routes/me";              // /api/auth/me
-import dailyRouter from "./routes/daily";        // 데일리 상태
-import weightsRouter from "./routes/weights";    // 체중 기록
-import dietMemoRouter from "./routes/dietMemo";  // 주간 식단 메모
+import authRouter from "./routes/auth";
+import meRouter from "./routes/me";
+import dailyRouter from "./routes/daily";
+import weightsRouter from "./routes/weights";
+import dietMemoRouter from "./routes/dietMemo";
 import diaryRouter from "./routes/diary";
+import favoritesRouter from "./routes/favorites";
+
+// 운동 목록 (워크아웃 카탈로그)
+import workoutsRouter from "./routes/workouts";
+// ✅ 운동 기록(저장/조회) 라우터
+import workoutLogsRouter from "./routes/workoutLogs";
+
 const app = express();
 
 // CORS
-const allow = (process.env.CORS_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
+const allow = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use(cors({ origin: allow.length ? allow : true, credentials: true }));
 
 app.use(express.json({ limit: "1mb" }));
@@ -24,15 +33,22 @@ app.use(morgan("dev"));
 // 헬스체크
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
-// ---- 라우트 마운트 (중요: 함수 호출하지 말고 그대로 전달) ----
+// Auth
 app.use("/api/auth", authRouter);
 app.use("/api/auth", meRouter);
-app.use("/api", diaryRouter);
 
+// 기존 기능
+app.use("/api", diaryRouter);
 app.use("/api", dailyRouter);
 app.use("/api", weightsRouter);
 app.use("/api", dietMemoRouter);
-// ---------------------------------------------------------------
+app.use("/api", favoritesRouter);
+
+// 워크아웃 카탈로그: 최종 경로 /api/workouts/...
+app.use("/api/workouts", workoutsRouter);
+
+// ✅ 운동 기록 저장/조회: 최종 경로 /api/workout-logs, /api/workout-logs/:date ...
+app.use("/api", workoutLogsRouter);
 
 const PORT = Number(process.env.PORT || 4000);
 

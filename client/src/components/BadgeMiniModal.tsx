@@ -1,18 +1,24 @@
+// client/src/components/collection/BadgeMiniModal.tsx
 import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from './BadgeMiniModal.module.css';
+import { useAuth, getExerciseStartDate } from '../store/auth';
+import { daysSince, toYmd } from '../utils/daysSince';
+
 // ===== Types =====
 type Badge = { need: number; img: string };
 type Mini  = { id: string; name: string; img: string };
+
 // ===== Constants (파일명 그대로, public 경로 사용) =====
 const BADGES: Badge[] = [
-  { need: 7,   img: '/images/7day.png' },
-  { need: 30,  img: '/images/30day.png' },
-  { need: 100, img: '/images/100day.png' },
-  { need: 200, img: '/images/200day.png' },
-  { need: 300, img: '/images/300day.png' },
-  { need: 365, img: '/images/1year.png' },
-  { need: 730, img: '/images/2year.png' },
+  { need: 7,   img: '/images/mongle7day-remove.png' },
+  { need: 30,  img: '/images/mongle30day-remove.png' },
+  { need: 100, img: '/images/mongle100day-remove.png' },
+  { need: 200, img: '/images/mongle200day-remove.png' },
+  { need: 300, img: '/images/mongle300day-remove.png' },
+  { need: 365, img: '/images/mongle1year-remove.png' },
+  { need: 730, img: '/images/mongle2year-remove.png' },
 ];
+
 const MINIS: Mini[] = [
   { id:'Babel',  name:'바벨',        img:'/images/바벨.png' },
   { id:'Chest_fly', name:'체스트플라이', img:'/images/체스트플라이.png' },
@@ -42,24 +48,10 @@ const MINIS: Mini[] = [
   { id:'plate4', name:'원판15kg', img:'/images/원판15kg.png' },
   { id:'plate5', name:'원판20kg', img:'/images/원판20kg.png' },
 ];
+
 // ===== LocalStorage Keys =====
-const KEY_START = 'jm_startDate';
 const KEY_MINIS = 'jm_minis';
-// ===== Helpers (Asia/Seoul: 클라이언트 로컬 자정 기준) =====
-function fmtDate(d: Date) {
-  const y = d.getFullYear();
-  const m = `${d.getMonth() + 1}`.padStart(2, '0');
-  const day = `${d.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function startOfDayLocal(d: Date) {
-  const z = new Date(d);
-  z.setHours(0, 0, 0, 0);
-  return z;
-}
-function diffDaysInclusive(a: Date, b: Date) {
-  return Math.floor((startOfDayLocal(a).getTime() - startOfDayLocal(b).getTime()) / 86400000) + 1;
-}
+
 // ===== Accessible Toast =====
 function useToast() {
   const [msg, setMsg] = useState<string | null>(null);
@@ -70,19 +62,25 @@ function useToast() {
   }, [msg]);
   return { msg, show: (m: string) => setMsg(m) };
 }
+
 // ===== Main Modal Component =====
 type Props = {
   open: boolean;
   onClose: () => void;
 };
+
 export default function BadgeMiniModal({ open, onClose }: Props) {
   const dlgRef = useRef<HTMLDivElement>(null);
   const { msg, show } = useToast();
-  // startDate
-  const [startDate, setStartDate] = useState<string>(() => {
-    const saved = localStorage.getItem(KEY_START);
-    return saved ? fmtDate(new Date(saved)) : fmtDate(new Date());
-  });
+  const { user } = useAuth();
+
+  // 운동 시작일 = 가입일(스토어/LS)
+  const startISO = useMemo(() => {
+    return user?.exerciseStartDate || user?.createdAt || getExerciseStartDate() || null;
+  }, [user]);
+
+  const startDate = startISO ? toYmd(startISO) : toYmd(new Date());
+
   // minis
   const [owned, setOwned] = useState<Set<string>>(() => {
     try {
@@ -92,6 +90,7 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
       return new Set();
     }
   });
+
   // focus trap + ESC close
   useEffect(() => {
     if (!open) return;
@@ -100,7 +99,6 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'Tab') {
-        // very light focus trap
         const focusables = dlgRef.current?.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
@@ -123,17 +121,31 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
       prev?.focus();
     };
   }, [open, onClose]);
-  // derived
-  const dplus = useMemo(() => {
-    const s = new Date(startDate);
-    const today = new Date();
-    return Math.max(diffDaysInclusive(today, s), 0);
-  }, [startDate]);
-  // handlers
-  const saveStart = () => {
-    localStorage.setItem(KEY_START, startDate);
-    show('시작일을 저장했어요.');
+
+  // D+ (메인과 동일 유틸)
+  const dplus = useMemo(() => (startISO ? daysSince(startISO) : 0), [startISO]);
+
+  // handlers (미니어처)
+  const allOwned = owned.size === MINIS.length;
+  const openCrate = () => {
+    if (allOwned) { show('이미 전부 모았어요!'); return; }
+    const pool = MINIS.filter(m => !owned.has(m.id));
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const next = new Set(owned);
+    next.add(pick.id);
+    setOwned(next);
+    localStorage.setItem(KEY_MINIS, JSON.stringify([...next]));
+    show(`획득! ${pick.name}`);
   };
+  const resetMinis = () => {
+    const ok = window.confirm('미니어처 획득 내역을 초기화할까요?');
+    if (!ok) return;
+    const next = new Set<string>();
+    setOwned(next);
+    localStorage.setItem(KEY_MINIS, JSON.stringify([]));
+    show('초기화했습니다.');
+  };
+
   const renderBadges = () => (
     <div className={styles.badgeGrid} role="list" aria-label="달성 뱃지 목록">
       {BADGES.map((b, i) => {
@@ -159,7 +171,14 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
               />
             </div>
             <div className={styles.hint}>{unlocked ? '획득 완료 :짠:' : `다음까지 ${remain}일`}</div>
-            <div className={styles.progress} aria-label={`진행률 ${pct}%`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} role="progressbar">
+            <div
+              className={styles.progress}
+              aria-label={`진행률 ${pct}%`}
+              aria-valuenow={pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              role="progressbar"
+            >
               <i style={{ width: `${pct}%` }} />
             </div>
           </div>
@@ -167,26 +186,7 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
       })}
     </div>
   );
-  const allOwned = owned.size === MINIS.length;
-  const openCrate = () => {
-    if (allOwned) { show('이미 전부 모았어요!'); return; }
-    // 클라 랜덤(MVP). 중복 방지: 미보유 풀에서만 뽑기
-    const pool = MINIS.filter(m => !owned.has(m.id));
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    const next = new Set(owned);
-    next.add(pick.id);
-    setOwned(next);
-    localStorage.setItem(KEY_MINIS, JSON.stringify([...next]));
-    show(`획득! ${pick.name}`);
-  };
-  const resetMinis = () => {
-    const ok = window.confirm('미니어처 획득 내역을 초기화할까요?');
-    if (!ok) return;
-    const next = new Set<string>();
-    setOwned(next);
-    localStorage.setItem(KEY_MINIS, JSON.stringify([]));
-    show('초기화했습니다.');
-  };
+
   const renderMinis = () => (
     <>
       <div className={styles.miniToolbar}>
@@ -223,12 +223,13 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
       </div>
     </>
   );
+
   if (!open) return null;
+
   return (
     <div
       className={styles.backdrop}
       onMouseDown={(e) => {
-        // 배경 클릭 시 닫기(모달 내부 클릭은 버블링 차단)
         if (e.target === e.currentTarget) onClose();
       }}
       aria-hidden={false}
@@ -244,29 +245,26 @@ export default function BadgeMiniModal({ open, onClose }: Props) {
         <header className={styles.hero}>
           <h1 id="jm-modal-title" className={styles.h1}>정글몽글짐 뱃지함</h1>
           <div className={styles.meta}>
-            <div className={styles.pill}>오늘:&nbsp;<span>{fmtDate(new Date())}</span></div>
+            <div className={styles.pill}>오늘:&nbsp;<span>{toYmd(new Date())}</span></div>
             <div className={styles.pill}>D+&nbsp;<span>{dplus}</span></div>
-            <div className={styles.pill}>
-              <label htmlFor="jm-start">운동 시작일</label>
-              <input
-                id="jm-start"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <button type="button" onClick={saveStart} aria-label="운동 시작일 저장">저장</button>
-            </div>
+          <div className={styles.pill}>
+            <label>운동 시작일</label>
+            <span>{startDate ? toYmd(new Date(startDate)) : "미정"}</span>
+          </div>
             <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="닫기">✕</button>
           </div>
         </header>
+
         <section className={styles.box} aria-label="달성 뱃지 구역">
           <h2 className={styles.h2}>달성 뱃지</h2>
           {renderBadges()}
         </section>
+
         <section className={styles.minis} aria-label="미니어처 구역">
           <h2 className={styles.h2}>미니어처</h2>
           {renderMinis()}
         </section>
+
         {/* Toast (status) */}
         <div className={`${styles.toast} ${msg ? styles.show : ''}`} role="status" aria-live="polite">
           {msg}

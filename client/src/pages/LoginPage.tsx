@@ -128,7 +128,7 @@ export default function LoginPage() {
               </button>
 
               <div style={styles.links}>
-                <Link to="/register" style={styles.link}>회원가입</Link>
+                <Link to="/register" style={styles.link}>정글몽글짐 등록</Link>
                 <Link to="/forgot" style={styles.link}>비밀번호 찾기</Link>
               </div>
             </form>
@@ -137,7 +137,7 @@ export default function LoginPage() {
 
         {/* 제목 라인 */}
         <div style={styles.subjectRow}>
-          제목 : <span style={{ opacity: 0.6 }}>오늘은 운동하러 로그인!</span>
+          <span style={{ opacity: 0.6 }}>오늘은 운동하러 로그인!</span>
         </div>
       </div>
     </div>
@@ -154,7 +154,7 @@ const styles: Record<string, React.CSSProperties> = {
   decorTopRight: { position: "absolute", top: 6, right: 12, width: 100, height: 70, background:"radial-gradient(closest-side, #ffadc7, transparent 70%), radial-gradient(closest-side, #c1f0b5, transparent 70%)", opacity: 0.7, pointerEvents: "none" },
   decorBottomRight: { position: "absolute", right: -10, bottom: -12, width: 120, height: 120, background:"radial-gradient(closest-side, #ffd166, transparent 70%), radial-gradient(closest-side, #a68cff, transparent 70%)", opacity: 0.7, pointerEvents: "none" },
   titleRow: { display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 8 },
-  titleText: { margin: 0, fontWeight: 900, fontSize: 36, color: "#0f172a", letterSpacing: "-0.3px", textAlign: "center" },
+  titleText: { margin: 0, fontWeight: 900, fontSize: 36, color: "#7cc3d5ff", letterSpacing: "-0.3px", textAlign: "center", fontFamily: 'GoryeongStrawberry, sans-serif',  },
   infoRowSingle: { display: "flex", justifyContent: "center", alignItems: "center", background: "#fff", border: "3px solid #111827", borderRadius: 14, padding: "10px 12px", marginBottom: 14 },
   infoPill: { display: "inline-block", width: "92%", maxWidth: "640px", textAlign: "center", padding: "10px 20px", borderRadius: 12, border: "1.5px dashed #9ca3af", fontSize: 18, fontWeight: 900, color: "#1f2937", background: "#fafafa", letterSpacing: "0.2px" },
   centerArea: { display: "grid", placeItems: "center", margin: "8px 0 12px" },
