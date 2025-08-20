@@ -5,12 +5,11 @@ type DailyStatusButtonsProps = {
   handleIconClick: (cardType: string) => void;
 };
 
-// 기존 배경색 기준 더 진한 테두리와 그림자 색관셉 정의
 const borderColors: Record<string, string> = {
-  "#FFF8E7": "#cdbd81", // 밝은 크림 - 진한 베이지
-  "#FFD680": "#bfa332", // 머스타드 - 진한 머스타드
-  "#B3C0E4": "#7a8bbf", // 연한 블루 - 진한 블루
-  "#65CFC7": "#3a8b86", // 청록 - 진한 청록
+  "#FFF8E7": "#cdbd81",
+  "#FFD680": "#bfa332",
+  "#B3C0E4": "#7a8bbf",
+  "#65CFC7": "#3a8b86",
 };
 
 const shadowColors: Record<string, string> = {
@@ -18,6 +17,13 @@ const shadowColors: Record<string, string> = {
   "#FFD680": "rgba(191,163,50,0.4)",
   "#B3C0E4": "rgba(122,139,191,0.4)",
   "#65CFC7": "rgba(58,139,134,0.4)",
+};
+
+const buttonImageSrc: Record<string, string> = {
+  "오늘은 살살": "../images/grade1.png",
+  "오늘은 적당히": "../images/grade2.png",
+  "오늘은 빡세게": "../images/grade3.png",
+  "나만의 운동": "../images/minebtn.png",
 };
 
 function useResponsiveStyles() {
@@ -33,23 +39,24 @@ function useResponsiveStyles() {
   const cardMobile: CSSProperties = {
     fontFamily: "'BMJUA', sans-serif",
     width: "96px",
-    height: "52px",
-    borderRadius: "24px",          // 구름 느낌 살리도록 둥글게 수정
+    height: "96px", // 키와 너비 동일해서 이미지 넣기 좋아짐
+    borderRadius: "24px", // 둥글게
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)", // 기본 값. 버튼별로 덮어씌움
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
     cursor: "pointer",
     userSelect: "none",
     transition: "transform 0.08s ease",
-    border: "3px solid transparent",           // 기본 테두리, 버튼별로 덮어씌움
+    border: "3px solid transparent",
+    padding: 0,
   };
 
   const cardDesktop: CSSProperties = {
     fontFamily: "'BMJUA', sans-serif",
     width: "120px",
-    height: "70px",
+    height: "120px", // 넉넉히 이미지랑 텍스트 둘 다 가능
     borderRadius: "28px",
     display: "flex",
     flexDirection: "column",
@@ -60,6 +67,7 @@ function useResponsiveStyles() {
     userSelect: "none",
     transition: "transform 0.08s ease",
     border: "3px solid transparent",
+    padding: 0,
   };
 
   const wrapperMobile: CSSProperties = {
@@ -82,8 +90,8 @@ function useResponsiveStyles() {
     card: isMobile ? cardMobile : cardDesktop,
     wrapper: isMobile ? wrapperMobile : wrapperDesktop,
     font: isMobile
-      ? { fontWeight: "bold", fontSize: "0.95rem" }
-      : { fontWeight: "bold", fontSize: "1.03rem" },
+      ? { fontWeight: "bold", fontSize: "0.95rem", marginTop: 6 }
+      : { fontWeight: "bold", fontSize: "1.03rem", marginTop: 8 },
   };
 }
 
@@ -107,9 +115,14 @@ function DailyStatusButtons({ handleIconClick }: DailyStatusButtonsProps) {
             key={name}
             style={{
               ...card,
-              background,
+              backgroundColor: background,
               border: `3px solid ${borderColor}`,
               boxShadow: `0 4px 12px ${shadowColor}`,
+              flexDirection: "column",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onClick={() => handleIconClick(name)}
             onMouseDown={(e) => {
@@ -131,7 +144,14 @@ function DailyStatusButtons({ handleIconClick }: DailyStatusButtonsProps) {
               if (e.key === "Enter" || e.key === " ") handleIconClick(name);
             }}
           >
-            <span style={{ ...font, color: '#3B3B3B', userSelect: 'none' }}>{name}</span>
+            <img
+              src={buttonImageSrc[name]}
+              alt={name}
+              style={{ width: "48px", height: "48px", objectFit: "contain" }}
+            />
+            <span style={{ ...font, color: "#3B3B3B", userSelect: "none" }}>
+              {name}
+            </span>
           </div>
         );
       })}

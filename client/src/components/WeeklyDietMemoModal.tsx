@@ -321,7 +321,7 @@ export default function WeeklyDietMemoModal({
                 border: "none",
                 fontSize: 20,
                 cursor: "pointer",
-                color: "#5b4027",
+                color: "#7e5a3e",
                 fontWeight: "bold",
                 lineHeight: 1,
                 padding: 0,
@@ -332,96 +332,120 @@ export default function WeeklyDietMemoModal({
           </div>
         </div>
 
+
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-          {dates.map((d, i) => {
-            const key = api.toYMD(d);
-            const isToday = key === todayKey;
-            return (
-              <section
-                key={key}
-                style={{
-                  border: "3px dashed #7e5a3e",
-                  borderRadius: 14,
-                  backgroundColor: "#fff7e8",
-                  padding: 12,
-                  minHeight: 210,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  userSelect: "text",
-                  marginRight: -5,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: 18,
-                      padding: "4px 10px",
-                      borderRadius: 12,
-                      border: "3px solid #7e5a3e",
-                      backgroundColor: isToday ? "#a4d9a4" : "#fcdcad",
-                      color: "#5b4027",
-                      userSelect: "none",
-                    }}
-                  >
-                    {NAMES[d.getDay()]}
-                  </div>
-                  <div style={{ fontWeight: "bold", opacity: 0.8, userSelect: "none" }}>
-                    {fmt(d.getFullYear(), d.getMonth() + 1, d.getDate())}
-                  </div>
+        {dates.map((d, i) => {
+          const key = api.toYMD(d);
+          const isToday = key === todayKey;
+          return (
+            <section
+              key={key}
+              style={{
+                border: "3px dashed #7e5a3e",
+                borderRadius: 14,
+                backgroundColor: "#fff7e8",
+                padding: 12,
+                minHeight: 210,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                userSelect: "text",
+                marginRight: -5,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: 18,
+                    padding: "4px 10px",
+                    borderRadius: 12,
+                    border: "3px solid #7e5a3e",
+                    backgroundColor: isToday ? "#a4d9a4" : "#fcdcad",
+                    color: "#5b4027",
+                    userSelect: "none",
+                  }}
+                >
+                  {NAMES[d.getDay()]}
                 </div>
+                <div style={{ fontWeight: "bold", opacity: 0.8, userSelect: "none" }}>
+                  {fmt(d.getFullYear(), d.getMonth() + 1, d.getDate())}
+                </div>
+              </div>
 
-                <div style={{ flexGrow: 1 }}>
-                  <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6 }}>식단</div>
-                  <textarea
-                    placeholder="예) 아침: 오트밀 · 점심: 닭가슴살샐러드 · 저녁: 연어덮밥"
-                    value={weekData[i]?.diet || ""}
-                    onChange={(e) => onChangeField(i, "diet", e.target.value)}
-                    style={{
-                      width: "100%",
-                      minHeight: 60,
-                      resize: "vertical",
-                      border: "1px solid #d5b895",
-                      borderRadius: 8,
-                      padding: 6,
-                      fontFamily: "'BMJUA', cursive",
-                      fontSize: 15,
-                      lineHeight: 1.5,
-                      backgroundColor: "#fffaf0",
-                      color: "#5b4027",
-                      marginLeft: "-6px",
-                    }}
-                  />
-                </div>
+              <div style={{ flexGrow: 1 }}>
+                <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6 }}>식단</div>
+                <textarea
+                  placeholder="예) 아침: 오트밀 · 점심: 닭가슴살샐러드 · 저녁: 연어덮밥"
+                  value={weekData[i]?.diet || ""}
+                  onChange={(e) => onChangeField(i, "diet", e.target.value)}
+                  style={{
+                    width: "100%",
+                    minHeight: 60,
+                    resize: "vertical",
+                    border: "1px solid #d5b895",
+                    borderRadius: 8,
+                    padding: 6,
+                    fontFamily: "'BMJUA', cursive",
+                    fontSize: 15,
+                    lineHeight: 1.5,
+                    backgroundColor: "#fffaf0",
+                    color: "#5b4027",
+                    marginLeft: "-6px",
+                  }}
+                />
+              </div>
 
-                <div>
-                  <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6 }}>메모</div>
-                  <textarea
-                    placeholder="간단한 메모를 적어보세요 :)"
-                    value={weekData[i]?.memo || ""}
-                    onChange={(e) => onChangeField(i, "memo", e.target.value)}
-                    style={{
-                      width: "100%",
-                      minHeight: 60,
-                      resize: "vertical",
-                      border: "1px solid #d5b895",
-                      borderRadius: 8,
-                      padding: 6,
-                      fontFamily: "'BMJUA', cursive",
-                      fontSize: 15,
-                      lineHeight: 1.5,
-                      backgroundColor: "#fffaf0",
-                      color: "#5b4027",
-                      marginLeft: "-6px",
-                    }}
-                  />
-                </div>
-              </section>
-            );
-          })}
+              <div>
+                <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 6 }}>메모</div>
+                <textarea
+                  placeholder="간단한 메모를 적어보세요 :)"
+                  value={weekData[i]?.memo || ""}
+                  onChange={(e) => onChangeField(i, "memo", e.target.value)}
+                  style={{
+                    width: "100%",
+                    minHeight: 60,
+                    resize: "vertical",
+                    border: "1px solid #d5b895",
+                    borderRadius: 8,
+                    padding: 6,
+                    fontFamily: "'BMJUA', cursive",
+                    fontSize: 15,
+                    lineHeight: 1.5,
+                    backgroundColor: "#fffaf0",
+                    color: "#5b4027",
+                    marginLeft: "-6px",
+                  }}
+                />
+              </div>
+            </section>
+          );
+        })}
+
+        {/* 마지막 칸 뒤에 mongleeat 이미지 추가 */}
+        <div
+          key="mongleeat"
+          style={{
+            backgroundColor: "transparent",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: 210,
+            padding: 12,
+            userSelect: "none",
+            cursor: "default",
+          }}
+        >
+          <img
+            src="../images/mongleeat.png"
+            alt="몽글이 먹는 모습"
+            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+            aria-hidden="true"
+          />
         </div>
       </div>
-    </>
-  );
+    </div>
+</>
+);
 }

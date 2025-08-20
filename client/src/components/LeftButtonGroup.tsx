@@ -1,7 +1,6 @@
-import React from 'react';
+import React from "react";
 
-// 타입 정의
-type ButtonName = '득근캘린더' | '몽글이뱃지';
+type ButtonName = "득근캘린더" | "몽글이뱃지";
 
 export type GroupProps = {
   onClick: (name: ButtonName) => void;
@@ -10,27 +9,18 @@ export type GroupProps = {
   maxSize?: number;
 };
 
-// 색상 상수 정의
-const leftButtonColors: Record<ButtonName, string> = {
-  '득근캘린더': '#24c474ff',
-  '몽글이뱃지': '#FFD680',
-};
-const leftButtonBorderColors: Record<ButtonName, string> = {
-  '득근캘린더': '#1a8d56',
-  '몽글이뱃지': '#bfa332',
-};
-const leftButtonShadowColors: Record<ButtonName, string> = {
-  '득근캘린더': 'rgba(26,141,86,0.4)',
-  '몽글이뱃지': 'rgba(191,163,50,0.4)',
+const buttonImageSrc: Record<ButtonName, string> = {
+  "득근캘린더": "../images/calendarbtn.png",
+  "몽글이뱃지": "../images/badgebtn.png",
 };
 
 export default function LeftButtonGroup({
   onClick,
-  buttonSize = '64px',
+  buttonSize = "64px",
   minSize,
   maxSize,
 }: GroupProps) {
-  const buttons: ButtonName[] = ['득근캘린더', '몽글이뱃지'];
+  const buttons: ButtonName[] = ["득근캘린더", "몽글이뱃지"];
   const sizeStyle: React.CSSProperties = {
     width: buttonSize,
     height: buttonSize,
@@ -38,38 +28,56 @@ export default function LeftButtonGroup({
     minHeight: minSize ? `${minSize}px` : undefined,
     maxWidth: maxSize ? `${maxSize}px` : undefined,
     maxHeight: maxSize ? `${maxSize}px` : undefined,
+    padding: 0,
+    border: "none", // 테두리 제거
+    background: "transparent", // 배경색 제거
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column", // 세로 정렬
+    alignItems: "center",
+    justifyContent: "center",
   };
-  const handleClick = (name: ButtonName) => {
-    onClick?.(name);
+
+  const textStyle: React.CSSProperties = {
+    marginTop: 4,
+    color: "#3B3B3B",
+    fontWeight: 600,
+    fontSize: 14,
+    whiteSpace: "nowrap",
   };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', zIndex: 10, position: 'relative', marginTop: 150 }}>
-      {buttons.map(name => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 20,
+        alignItems: "center",
+        zIndex: 10,
+        position: "relative",
+        marginTop: 150,
+      }}
+    >
+      {buttons.map((name) => (
         <button
           key={name}
-          onClick={() => handleClick(name)}
+          onClick={() => onClick?.(name)}
           aria-label={name}
           type="button"
-          style={{
-            ...sizeStyle,
-            backgroundColor: leftButtonColors[name],
-            borderRadius: 24,
-            border: `3px solid ${leftButtonBorderColors[name]}`,
-            boxShadow: `0 4px 16px ${leftButtonShadowColors[name]}`,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'box-shadow 0.3s ease',
+          style={sizeStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = "0.8";
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = `0 6px 20px ${leftButtonShadowColors[name]}`;
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = `0 4px 16px ${leftButtonShadowColors[name]}`;
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = "1";
           }}
         >
-          <span style={{ whiteSpace: 'nowrap', color: '#3B3B3B', fontWeight: 600 }}>{name}</span>
+          <img
+            src={buttonImageSrc[name]}
+            alt={name}
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
+          <span style={textStyle}>{name}</span>
         </button>
       ))}
     </div>

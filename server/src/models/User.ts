@@ -8,7 +8,8 @@ export interface IUser extends Document {
   resetTokenHash?: string | null;
   resetTokenExp?: Date | null;
   exerciseStartDate?: Date;     // 가입일과 동일하게 기본값
-  favoriteExercises: string[];  // ✅ 추가: 유저별 즐겨찾기 운동 ID 목록
+  favoriteExercises: string[];  // 유저별 즐겨찾기 운동 ID 목록
+  goalWeight?: number | null;   // ✅ 추가: 목표 체중(kg), 서버에 저장
   createdAt: Date;              // timestamps:true 기준
   updatedAt: Date;
 }
@@ -36,10 +37,18 @@ const schema = new Schema<IUser>(
       },
     },
 
-    // ✅ 추가: 즐겨찾기 운동 ID 배열
+    // 즐겨찾기 운동 ID 배열
     favoriteExercises: {
       type: [String],
       default: [],
+    },
+
+    // ✅ 추가: 목표 체중(kg). 입력 안 하면 null
+    goalWeight: {
+      type: Number,
+      default: null,
+      // 선택: 음수/비정상 값 방지 (필요 시 주석 해제)
+      // min: 0,
     },
   },
   {
@@ -48,7 +57,7 @@ const schema = new Schema<IUser>(
   }
 );
 
-// ✅ 보정: createdAt 세팅 타이밍 이슈 대비 (최초 저장 시 보장)
+// 최초 저장 시 exerciseStartDate 보정
 schema.pre("save", function (next) {
   // @ts-ignore
   if (!this.exerciseStartDate) {
@@ -58,7 +67,7 @@ schema.pre("save", function (next) {
   next();
 });
 
-// ✅ 응답 직렬화: 민감정보 제거 + _id → id 변환
+// 응답 직렬화: 민감정보 제거 + _id → id 변환
 schema.set("toJSON", {
   transform(_doc, ret: any) {
     if (ret._id) {

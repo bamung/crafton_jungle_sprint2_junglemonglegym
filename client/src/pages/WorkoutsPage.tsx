@@ -81,6 +81,20 @@ export default function WorkoutsPage() {
     return () => clearInterval(id);
   }, [isRunning, startAt]);
 
+  useEffect(() => {
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      window.history.back(); // 브라우저 이전 페이지로 이동
+    }
+  };
+  window.addEventListener("keydown", onKeyDown);
+  return () => {
+    window.removeEventListener("keydown", onKeyDown);
+  };
+}, []);
+
+
   const fmtElapsed = useMemo(() => {
     const m = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
     const s = String(elapsedSec % 60).padStart(2, "0");
@@ -280,37 +294,107 @@ export default function WorkoutsPage() {
   }, [routine, elapsedSec, dateKey, group]);
 
   const [pickOpen, setPickOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const recoGridStyle = {
+  ...S.recoGrid,
+  gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+};
 
-  return (
-    <section style={S.wrap}>
-      {/* 상단 고정 */}
-      <div style={S.stickyWrap}>
-        <header style={S.header}>
-          <button onClick={() => navigate(-1)} style={S.backBtn} aria-label="뒤로">
-            ←
+  const getRecoGridStyle = (isMobile: boolean): React.CSSProperties => ({
+  display: "grid",
+  gap: 12,
+  gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+});
+
+useEffect(() => {
+  const onResize = () => setIsMobile(window.innerWidth < 600);
+  onResize(); // 컴포넌트가 처음 마운트될 때 초기값 설정
+  window.addEventListener("resize", onResize); // 창 크기 변경 감지
+  return () => window.removeEventListener("resize", onResize); // 언마운트 시 이벤트 제거
+}, []);
+
+return (
+  <section style={S.wrap}>
+    {/* 상단 고정 */}
+    <div style={S.stickyWrap}>
+      <header
+        style={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          justifyContent: "space-between",
+          alignItems: isMobile ? "flex-start" : "center",
+          padding: 16,
+          gap: isMobile ? 8 : 0,
+        }}
+      >
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            ...S.backBtn,
+            width: isMobile ? 36 : 44,
+            height: isMobile ? 36 : 44,
+            minWidth: isMobile ? 36 : 44,
+            minHeight: isMobile ? 36 : 44,
+            fontSize: isMobile ? 16 : 18,
+          }}
+          aria-label="뒤로"
+        >
+          ←
+        </button>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: isMobile ? "flex-start" : "center",
+          }}
+        >
+          <div
+            style={{
+              ...S.title,
+              fontSize: isMobile ? 20 : 24,
+            }}
+          >
+            오늘 루틴!!
+          </div>
+          <div
+            style={{
+              ...S.subTitle,
+              fontSize: isMobile ? 12 : 13,
+              marginTop: 4,
+            }}
+          >
+            {subtitle}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginTop: isMobile ? 12 : 0,
+          }}
+        >
+          <button
+            style={{
+              ...S.calendarBtn,
+              padding: isMobile ? "6px 12px" : "8px 10px",
+              fontSize: isMobile ? 14 : 16,
+            }}
+            onClick={() => setCalOpen(true)}
+            aria-label="캘린더"
+          >
+            📅 기록
           </button>
-
-          <div style={S.titleBox}>
-            <div style={S.title}>오늘 루틴!!</div>
-            <div style={S.subTitle}>{subtitle}</div>
+          <div style={S.chips}>
+            <span style={S.chip}>오늘 {toYmd(new Date())}</span>
+            <span style={{ ...S.chip, background: C.primary, color: C.white }}>
+              D+{dplus}
+            </span>
           </div>
-
-          <div style={S.rightHeader}>
-            <button
-              style={S.calendarBtn}
-              onClick={() => setCalOpen(true)}
-              aria-label="캘린더"
-            >
-              📅 기록
-            </button>
-            <div style={S.chips}>
-              <span style={S.chip}>오늘 {toYmd(new Date())}</span>
-              <span style={{ ...S.chip, background: C.primary, color: C.white }}>
-                D+{dplus}
-              </span>
-            </div>
-          </div>
-        </header>
+        </div>
+      </header>
 
         <div style={S.timerBar}>
           <div
@@ -339,97 +423,107 @@ export default function WorkoutsPage() {
         </div>
       </div>
 
-      {/* 본문 */}
-      <div style={S.content}>
-        {/* 추천 운동 헤더 + 토글 */}
-        <div style={S.sectionHeader}>
-          <div style={S.sectionTitle}>추천 운동</div>
-          <button
-            type="button"
-            onClick={() => setRecoOpen((v) => !v)}
-            style={S.toggleBtn}
-            aria-expanded={recoOpen}
-          >
-            <span
+{/* 본문 */}
+<div style={S.content}>
+  {/* 추천 운동 헤더 + 토글 */}
+  <div style={S.sectionHeader}>
+    <div style={S.sectionTitle}>추천 운동</div>
+    <button
+      type="button"
+      onClick={() => setRecoOpen((v) => !v)}
+      style={S.toggleBtn}
+      aria-expanded={recoOpen}
+    >
+      <span
+        style={{
+          transform: `rotate(${recoOpen ? 180 : 0}deg)`,
+          display: "inline-block",
+          transition: "transform .2s",
+        }}
+      >
+        ▾
+      </span>
+      <span style={{ marginLeft: 6 }}>{recoOpen ? "접기" : "펼치기"}</span>
+    </button>
+  </div>
+
+  {recoOpen && (
+    <>
+      {showBlank && <EmptyState />}
+      {!showBlank && (
+        <>
+          {loadingReco && difficulty && (
+            <div style={{ color: C.mute }}>추천 불러오는 중…</div>
+          )}
+          {!loadingReco && difficulty && reco.length > 0 && (
+            <div
               style={{
-                transform: `rotate(${recoOpen ? 180 : 0}deg)`,
-                display: "inline-block",
-                transition: "transform .2s",
+                ...S.recoGrid,
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
               }}
             >
-              ▾
-            </span>
-            <span style={{ marginLeft: 6 }}>{recoOpen ? "접기" : "펼치기"}</span>
-          </button>
-        </div>
-
-        {recoOpen && (
-          <>
-            {showBlank && <EmptyState />}
-            {!showBlank && (
-              <>
-                {loadingReco && difficulty && (
-                  <div style={{ color: C.mute }}>추천 불러오는 중…</div>
-                )}
-                {!loadingReco && difficulty && reco.length > 0 && (
-                  <div style={S.recoGrid}>
-                    {reco.map((r) => (
-                      <div key={r.id} style={S.recoCard}>
-                        <div style={S.recoThumb}>
-                          {r.image ? (
-                            <img src={r.image} alt="" style={S.img} />
-                          ) : (
-                            "🏋️"
-                          )}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={S.recoTitle}>{r.title}</div>
-                          <div style={S.recoMeta}>
-                            {GROUP_LABEL[r.group]} · {DIFF_LABEL[r.difficulty]}
-                          </div>
-                        </div>
-                        <button
-                          style={S.addBtn}
-                          onClick={() =>
-                            setRoutine((rs) => [
-                              ...rs,
-                              {
-                                id: r.id,
-                                title: r.title,
-                                group: r.group as RoutineItem["group"],
-                                sets: defaultSets(),
-                                done: false,
-                              },
-                            ])
-                          }
-                        >
-                          + 담기
-                        </button>
-                      </div>
-                    ))}
+              {reco.map((r) => (
+                <div key={r.id} style={S.recoCard}>
+                  <div style={S.recoThumb}>
+                    {r.image ? (
+                      <img src={r.image} alt="" style={S.img} />
+                    ) : (
+                      "🏋️"
+                    )}
                   </div>
-                )}
-              </>
-            )}
-          </>
-        )}
-
-        {/* 내 루틴 (2열 고정) */}
+                  <div style={{ flex: 1 }}>
+                    <div style={S.recoTitle}>{r.title}</div>
+                    <div style={S.recoMeta}>
+                      {GROUP_LABEL[r.group]} · {DIFF_LABEL[r.difficulty]}
+                    </div>
+                  </div>
+                  <button
+                    style={S.addBtn}
+                    onClick={() =>
+                      setRoutine((rs) => [
+                        ...rs,
+                        {
+                          id: r.id,
+                          title: r.title,
+                          group: r.group as RoutineItem["group"],
+                          sets: defaultSets(),
+                          done: false,
+                        },
+                      ])
+                    }
+                  >
+                    + 담기
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  )}
+  
+        {/* 내 루틴 (반응형 1열 or 2열) */}
         <div style={{ marginTop: 14 }}>
-          <div style={S.sectionTitle}>내 루틴</div>
-          <div style={S.routineGrid}>
+        <div style={S.sectionTitle}>내 루틴</div>
+        <div
+            style={{
+            ...S.routineGrid,
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+            }}
+        >
             {routine.map((it, idx) => {
-              const allSetsDone = it.sets.length > 0 && it.sets.every((s) => s.done);
-              const cardDone = !!it.done || allSetsDone;
+            const allSetsDone = it.sets.length > 0 && it.sets.every((s) => s.done);
+            const cardDone = !!it.done || allSetsDone;
 
-              return (
+            return (
                 <div
-                  key={`${it.id}-${idx}`}
-                  style={{
+                key={`${it.id}-${idx}`}
+                style={{
                     ...S.exerciseWrap,
                     outline: cardDone ? `2px solid ${C.primary}` : `2px solid transparent`,
                     opacity: cardDone ? 0.96 : 1,
-                  }}
+                }}
                 >
                   {/* 순서 뱃지 */}
                   <div style={S.orderBadge} aria-hidden="true">
@@ -676,7 +770,7 @@ function CalendarModal({
 
   const isSelected = (d: Date) => toYmd(d) === toYmd(date);
   const isToday = (d: Date) => toYmd(d) === toYmd(new Date());
-
+  
   return (
     <div style={S.calBackdrop} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div style={S.calSheet} role="dialog" aria-modal="true" aria-label="운동 기록 캘린더">
@@ -772,6 +866,7 @@ const S: Record<string, React.CSSProperties> = {
     margin: "0 auto",
     padding: "0 20px 130px",
     fontFamily: "'BMJUA', sans-serif",
+    overflow: "hidden",
   },
   stickyWrap: { position: "sticky", top: 16, zIndex: 20, display: "grid", gap: 10 },
   header: {

@@ -1,4 +1,3 @@
-// client/src/components/workout/ExerciseCard.tsx
 import { useEffect, useMemo, useState } from "react";
 import { favApi } from "../../lib/api";
 
@@ -16,7 +15,7 @@ const C = {
   line: "#e8edf3",
   chip: "#eef8f7",
   panel: "#f6f8fb",
-  inputBg: "#eef8f7",
+  inputBg: "#fff", // pill 느낌 살리기 위해 white
   white: "#fff",
   mute: "#6b7280",
   danger: "#ef4444",
@@ -32,13 +31,21 @@ function summary(sets: SetRow[]) {
 type Props = {
   item: RoutineItem;
   onChange: (next: RoutineItem) => void;
-  /** 내 루틴에서 카드 자체 삭제 */
-  onRemove?: () => void;
+  onRemove?: () => void; // 카드 자체 삭제
 };
 
 export default function ExerciseCard({ item, onChange, onRemove }: Props) {
   const [local, setLocal] = useState(item);
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => setLocal(item), [item.id, item.title, item.group, item.sets.length]);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 600);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const sum = useMemo(() => summary(local.sets), [local.sets]);
 
@@ -48,12 +55,8 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
     let ignore = false;
     favApi
       .list()
-      .then((arr) => {
-        if (!ignore) setIsFav(arr.includes(local.id));
-      })
-      .catch(() => {
-        if (!ignore) setIsFav(false);
-      });
+      .then((arr) => !ignore && setIsFav(arr.includes(local.id)))
+      .catch(() => !ignore && setIsFav(false));
     return () => {
       ignore = true;
     };
@@ -74,13 +77,16 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
     onChange(n);
   };
 
-  const removeSet = (idx: number) =>
-    mutate((d) => {
-      d.sets.splice(idx, 1);
-    });
+  const removeSet = (idx: number) => mutate((d) => d.sets.splice(idx, 1));
 
   return (
-    <div style={S.card}>
+    <div
+      style={{
+        ...S.card,
+        padding: isMobile ? 8 : 14,
+        fontSize: isMobile ? 14 : 16,
+      }}
+    >
       <style>{`
         .jm-input { color: ${C.navy} !important; caret-color: ${C.navy}; }
         .jm-input::placeholder { color: ${C.mute}; opacity: 1; }
@@ -94,7 +100,13 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
       `}</style>
 
       {/* 헤더 */}
-      <div style={S.cardHeader}>
+      <div
+        style={{
+          ...S.cardHeader,
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 8 : 12,
+        }}
+      >
         <div style={S.titleWrap}>
           <button
             onClick={toggleFav}
@@ -104,6 +116,10 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
               ...S.starBtn,
               color: isFav ? C.primary : C.mute,
               borderColor: isFav ? C.primary : C.line,
+              width: isMobile ? 30 : 36,
+              height: isMobile ? 30 : 36,
+              minWidth: isMobile ? 30 : 36,
+              fontSize: isMobile ? 14 : 18,
             }}
           >
             {isFav ? "★" : "☆"}
@@ -112,11 +128,11 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
         </div>
 
         <div style={S.actions}>
-          <div style={S.chips}>
-            <span style={S.chip}>{local.sets.length}세트</span>
-            <span style={S.chip}>{sum.totalKg.toLocaleString()}kg</span>
-            <span style={S.chip}>최대 {sum.maxKg}kg</span>
-            <span style={S.chip}>{sum.totalReps}회</span>
+          <div style={{ ...S.chips, gap: isMobile ? 4 : 6 }}>
+            <span style={{ ...S.chip, fontSize: isMobile ? 10 : 12 }}>{local.sets.length}세트</span>
+            <span style={{ ...S.chip, fontSize: isMobile ? 10 : 12 }}>{sum.totalKg.toLocaleString()}kg</span>
+            <span style={{ ...S.chip, fontSize: isMobile ? 10 : 12 }}>최대 {sum.maxKg}kg</span>
+            <span style={{ ...S.chip, fontSize: isMobile ? 10 : 12 }}>{sum.totalReps}회</span>
           </div>
 
           {onRemove && (
@@ -124,7 +140,13 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
               onClick={onRemove}
               title="운동 삭제"
               aria-label="운동 삭제"
-              style={S.removeCardBtn}
+              style={{
+                ...S.removeCardBtn,
+                width: isMobile ? 30 : 36,
+                height: isMobile ? 30 : 36,
+                minWidth: isMobile ? 30 : 36,
+                fontSize: isMobile ? 14 : 16,
+              }}
             >
               🗑
             </button>
@@ -135,11 +157,19 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
       {/* 세트 입력 */}
       <div style={S.panel}>
         {local.sets.map((s, i) => (
-          <div key={i} style={{ ...S.setRow, opacity: s.done ? 0.9 : 1 }}>
-            <div style={S.setIdx}>{i + 1}세트</div>
+          <div
+            key={i}
+            style={{
+              ...S.setRow,
+              opacity: s.done ? 0.9 : 1,
+              gap: 12, // ✅ 항상 동일 간격
+              padding: isMobile ? "10px 0" : "8px 0",
+            }}
+          >
+            <div style={{ ...S.setIdx, minWidth: 60 }}>{i + 1}세트</div>
 
             {/* 중량 */}
-            <div style={S.field}>
+            <div style={{ ...S.field, flex: 1, minWidth: 120 }}>
               <input
                 className="jm-input"
                 aria-label="중량"
@@ -153,7 +183,7 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
                   })
                 }
                 placeholder="중량"
-                style={S.input}
+                style={{ ...S.input, height: isMobile ? 38 : 40 }}
               />
               <div style={S.stepperWrap}>
                 <button
@@ -178,8 +208,8 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
               <span style={S.unit}>kg</span>
             </div>
 
-            {/* 반복 (살짝 여백) */}
-            <div style={{ ...S.field, marginLeft: 6 }}>
+            {/* 반복 */}
+            <div style={{ ...S.field, flex: 1, minWidth: 120 }}>
               <input
                 className="jm-input"
                 aria-label="반복"
@@ -193,7 +223,7 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
                   })
                 }
                 placeholder="반복"
-                style={S.input}
+                style={{ ...S.input, height: isMobile ? 38 : 40 }}
               />
               <div style={S.stepperWrap}>
                 <button
@@ -218,11 +248,11 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
               <span style={S.unit}>회</span>
             </div>
 
-            {/* 완료 토글 */}
+            {/* 완료 토글 (원형) */}
             <button
               onClick={() => mutate((d) => (d.sets[i].done = !d.sets[i].done))}
               style={{
-                ...S.doneBtn,
+                ...S.circleBtn,
                 background: s.done ? C.primary : C.white,
                 color: s.done ? "#fff" : C.navy,
                 borderColor: s.done ? C.primary : C.line,
@@ -230,13 +260,13 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
               aria-pressed={s.done}
               title={s.done ? "완료 취소" : "완료"}
             >
-              ✔
+              ✓
             </button>
 
-            {/* 세트 삭제 */}
+            {/* 세트 삭제 (원형) */}
             <button
               onClick={() => removeSet(i)}
-              style={S.deleteBtn}
+              style={{ ...S.circleBtn, color: C.danger }}
               title="세트 삭제"
               aria-label={`세트 ${i + 1} 삭제`}
             >
@@ -245,11 +275,7 @@ export default function ExerciseCard({ item, onChange, onRemove }: Props) {
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={() => mutate((d) => d.sets.push({ weight: 0, reps: 0, done: false }))}
-          style={S.addSet}
-        >
+        <button type="button" onClick={() => mutate((d) => d.sets.push({ weight: 0, reps: 0, done: false }))} style={S.addSet}>
           + 세트 추가
         </button>
       </div>
@@ -320,11 +346,11 @@ const S: Record<string, React.CSSProperties> = {
 
   panel: { background: C.panel, borderRadius: 14, padding: 12, marginTop: 8 },
 
-  // 완료/삭제 고정폭, 입력칸은 유동
+  /** 세트행: | 인덱스 | weight pill | reps pill | ✓ | 🗑 | */
   setRow: {
     display: "grid",
     gridTemplateColumns: "70px minmax(0,1fr) minmax(0,1fr) 44px 44px",
-    gap: 10,
+    gap: 12, // ✅ 컬럼 간격 고정
     alignItems: "center",
     padding: "8px 0",
     borderBottom: `1px dashed ${C.line}`,
@@ -334,76 +360,67 @@ const S: Record<string, React.CSSProperties> = {
 
   field: { position: "relative" },
 
+  /** pill 입력칸 */
   input: {
     width: "100%",
-    height: 38,
-    borderRadius: 10,
+    height: 40,
+    borderRadius: 999, // ✅ pill
     border: `1px solid ${C.line}`,
-    padding: "0 58px 0 12px", // 스텝퍼+단위 자리
+    padding: "0 88px 0 14", // 단위+스테퍼 공간 여유
     background: C.inputBg,
     outline: "none",
     color: C.navy,
-    fontWeight: 700,
+    fontWeight: 800,
   },
 
+  /** 스테퍼(▲▼) - 입력칸 내부 오른쪽 */
   stepperWrap: {
     position: "absolute",
-    right: 30,
+    right: 12,
     top: "50%",
     transform: "translateY(-50%)",
     display: "grid",
     gridTemplateRows: "1fr 1fr",
-    gap: 2,
+    gap: 4,
   },
   stepperBtn: {
-    width: 20,
-    height: 14,
-    borderRadius: 6,
+    width: 22,
+    height: 16,
+    borderRadius: 999,
     border: `1px solid ${C.line}`,
     background: C.white,
     color: C.navy,
     fontSize: 10,
-    lineHeight: "12px",
+    lineHeight: "14px",
     cursor: "pointer",
     padding: 0,
   } as React.CSSProperties,
 
+  /** 단위(kg/회) - 스테퍼 왼쪽에 고정 */
   unit: {
     position: "absolute",
-    right: 10,
+    right: 44, // (스테퍼 22 + gap 10 + 여유)
     top: "50%",
     transform: "translateY(-50%)",
     color: C.mute,
     fontSize: 12,
+    fontWeight: 800,
   },
 
-  doneBtn: {
-    height: 36,
-    width: 36,
-    minWidth: 36,
+  /** 원형 버튼 공통(완료/삭제) */
+  circleBtn: {
+    width: 40,
+    height: 40,
+    minWidth: 40,
     display: "grid",
     placeItems: "center",
-    borderRadius: 10,
-    border: `1px solid ${C.line}`,
-    cursor: "pointer",
-    background: C.white,
-    padding: 0,
-    fontSize: 16,
-  },
-
-  deleteBtn: {
-    height: 36,
-    width: 36,
-    minWidth: 36,
-    display: "grid",
-    placeItems: "center",
-    borderRadius: 10,
+    borderRadius: 999,
     border: `1px solid ${C.line}`,
     background: C.white,
     cursor: "pointer",
-    color: C.danger,
     padding: 0,
-    fontSize: 16,
+    fontSize: 18,
+    marginLeft: 8, // ✅ 반복 입력칸과 체크 버튼 사이 간격 추가
   },
 
   addSet: {

@@ -1,8 +1,23 @@
+import React, { useState, useEffect } from 'react';
+
 export type BodyPart = '어깨' | '등' | '가슴' | '팔' | '하체';
+
 type MonggleImageAreaProps = {
   handlePartClick: (part: BodyPart) => void;
 };
-function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
+
+function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 600);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div
       style={{
@@ -12,7 +27,7 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
-        minHeight: "480px",
+        minHeight: isMobile ? "360px" : "480px",
         background: "transparent",
       }}
     >
@@ -20,10 +35,10 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
         src="/monggle_cha.png"
         alt="몽글이 캐릭터"
         style={{
-          width: "500px",
+          width: isMobile ? "400px" : "500px",
           height: "auto",
           display: "block",
-          margin: "250px 0 0 0",
+          margin: isMobile ? "180px 0 0 0" : "250px 0 0 0",
           background: "transparent",
           borderRadius: "35px",
           position: "absolute",
@@ -34,7 +49,7 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
       <button
         onClick={() => handlePartClick('어깨')}
         style={{
-          position: "absolute", top: "75%", left: "0%",
+          position: "absolute", top: "75%", left: "-5%",
           display: "flex", alignItems: "center",
           background: "transparent", border: "none",
           padding: 0, margin: 0, cursor: "pointer", outline: "none", zIndex: 20
@@ -156,4 +171,5 @@ function MonggleImageArea({ handlePartClick }: MonggleImageAreaProps){
     </div>
   );
 }
+
 export default MonggleImageArea;

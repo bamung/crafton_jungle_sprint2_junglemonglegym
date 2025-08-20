@@ -1,43 +1,46 @@
 import { Router } from "express";
-import { AuthedRequest, requireAuth } from "../middlewares/requireAuth";
+import { requireAuth, AuthedRequest } from "../middlewares/requireAuth";
 import WeightEntry from "../models/WeightEntry";
 
 const router = Router();
+router.use(requireAuth);
 
-function isKey(s?: string) {
-  return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
-}
+// GET /api/weights?from=YYYY-MM-DD&to=YYYY-MM-DD
+router.get("/weights", async (req: AuthedRequest, res) => {
+  const userId = req.userId!;
+  const { from, to } = req.query as { from?: string; to?: string };
+  const end = to ?? new Date().toISOString().slice(0,10);
+  const start = from ?? new Date(Date.now() - 29*86400000).toISOString().slice(0,10);
 
-router.get("/weights", requireAuth, async (req: AuthedRequest, res) => {
-  const { from, to } = req.query as any;
-  const q: any = { userId: req.userId };
-  if (isKey(from) || isKey(to)) {
-    q.date = {};
-    if (isKey(from)) q.date.$gte = from;
-    if (isKey(to)) q.date.$lte = to;
-  }
-  const list = await WeightEntry.find(q).sort({ date: 1 });
-  res.json(list);
+  const items = await WeightEntry.find({
+    userId,
+    dateKey: { $gte: start, $lte: end },
+  }).sort({ dateKey: 1 });
+
+  res.json({ items });
 });
 
-router.put("/weights/:date", requireAuth, async (req: AuthedRequest, res) => {
-  const dateKey = req.params.date;
-  if (!isKey(dateKey)) return res.status(400).json({ message: "Invalid date" });
-
-  const payload = {
-    weightKg: Number(req.body?.weightKg),
-    bodyFatPct: req.body?.bodyFatPct == null ? undefined : Number(req.body.bodyFatPct),
-    muscleKg: req.body?.muscleKg == null ? undefined : Number(req.body.muscleKg),
-    memo: String(req.body?.memo || ""),
+// PUT /api/weights/:dateKey
+router.put("/weights/:dateKey", async (req: AuthedRequest, res) => {
+  const userId = req.userId!;
+  const { dateKey } = req.params;
+  const { weight, bodyFat, muscle, memo } = req.body ?? {};
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    return res.status(400).json({ message: "dateKey must be YYYY-MM-DD" });
+  }
+  const update = {
+    ...(weight !== undefined ? { weight } : {}),
+    ...(bodyFat !== undefined ? { bodyFat } : {}),
+    ...(muscle !== undefined ? { muscle } : {}),
+    ...(memo !== undefined ? { memo } : {}),
+    updatedAt: new Date(),
   };
-  if (!payload.weightKg) return res.status(400).json({ message: "weightKg required" });
-
   const doc = await WeightEntry.findOneAndUpdate(
-    { userId: req.userId, date: dateKey },
-    { $set: payload },
-    { new: true, upsert: true }
+    { userId, dateKey },
+    { $set: update, $setOnInsert: { userId, dateKey } },
+    { upsert: true, new: true }
   );
-  res.json(doc);
+  res.json({ item: doc });
 });
 
 export default router;

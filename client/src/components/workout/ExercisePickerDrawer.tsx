@@ -1,4 +1,3 @@
-// client/src/components/workout/ExercisePickerDrawer.tsx
 import { useEffect, useMemo, useState } from "react";
 import { favApi } from "../../lib/api";
 
@@ -47,6 +46,16 @@ export default function ExercisePickerDrawer({
 }: Props) {
   const [category, setCategory] = useState<FilterKey>("all");
   const [favs, setFavs] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 600);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -93,10 +102,29 @@ export default function ExercisePickerDrawer({
   if (!open) return null;
 
   return (
-    <div style={S.backdrop} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={S.sheet} role="dialog" aria-modal="true" aria-labelledby="picker-title">
+    <div
+      style={{
+        ...S.backdrop,
+        padding: isMobile ? 6 : 12,
+      }}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          ...S.sheet,
+          width: isMobile ? "96vw" : "min(1024px, 98vw)",
+          maxHeight: isMobile ? "80vh" : "60vh",
+          overflowY: "auto",
+          padding: isMobile ? "8px 12px" : undefined,
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="picker-title"
+      >
         <header style={S.header}>
-          <div id="picker-title" style={S.hTitle}>운동 선택</div>
+          <div id="picker-title" style={{ ...S.hTitle, fontSize: isMobile ? 18 : undefined }}>
+            운동 선택
+          </div>
           <button aria-label="닫기" onClick={onClose} style={S.closeBtn}>
             {/* ✕ 대신 SVG로 정확히 중앙 배치 */}
             <svg viewBox="0 0 24 24" style={S.closeIcon} aria-hidden="true">
@@ -107,7 +135,13 @@ export default function ExercisePickerDrawer({
         </header>
 
         {/* 카테고리 Pills */}
-        <div style={S.pills}>
+        <div
+          style={{
+            ...S.pills,
+            gap: isMobile ? 6 : 8,
+            padding: isMobile ? "8px 12px 4px 12px" : "12px 16px 4px 16px",
+          }}
+        >
           {PILL_ORDER.map((k) => {
             const label = k === "fav" ? "커스텀" : k === "all" ? "전체" : GROUP_LABEL[k as PickerItem["group"]];
             const selected = category === k;
@@ -120,6 +154,8 @@ export default function ExercisePickerDrawer({
                   background: selected ? C.primary : C.white,
                   color: selected ? "#fff" : C.navy,
                   borderColor: selected ? C.primary : C.line,
+                  fontSize: isMobile ? 12 : 13,
+                  padding: isMobile ? "6px 10px" : "8px 14px",
                 }}
               >
                 {label}
@@ -129,18 +165,40 @@ export default function ExercisePickerDrawer({
         </div>
 
         {/* 리스트 */}
-        <div style={S.list}>
+        <div
+          style={{
+            ...S.list,
+            maxHeight: isMobile ? "calc(80vh - 140px)" : "60vh",
+            padding: isMobile ? 8 : 12,
+          }}
+        >
           {filtered.map((it) => {
             const isFav = favs.has(it.id);
             return (
-              <div key={it.id} style={S.item}>
-                <div style={S.thumb}>
+              <div
+                key={it.id}
+                style={{
+                  ...S.item,
+                  gridTemplateColumns: isMobile ? "48px 1fr 32px 28px" : S.item.gridTemplateColumns,
+                  gap: isMobile ? 8 : 12,
+                  padding: isMobile ? "8px 10px" : "12px 14px",
+                  borderRadius: isMobile ? 12 : 14,
+                }}
+              >
+                <div
+                  style={{
+                    ...S.thumb,
+                    width: isMobile ? 48 : 56,
+                    height: isMobile ? 48 : 56,
+                    borderRadius: isMobile ? 10 : 12,
+                  }}
+                >
                   {it.image ? <img src={it.image} alt="" style={S.img} /> : "🏋️"}
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={S.iTitle}>{it.title}</div>
-                  <div style={S.iMeta}>{GROUP_LABEL[it.group]}</div>
+                  <div style={{ ...S.iTitle, fontSize: isMobile ? 14 : undefined }}>{it.title}</div>
+                  <div style={{ ...S.iMeta, fontSize: isMobile ? 10 : undefined }}>{GROUP_LABEL[it.group]}</div>
                 </div>
 
                 {/* 즐겨찾기 */}
@@ -154,6 +212,10 @@ export default function ExercisePickerDrawer({
                     ...S.star,
                     color: isFav ? C.primary : C.mute,
                     borderColor: isFav ? C.primary : C.line,
+                    width: isMobile ? 28 : 36,
+                    height: isMobile ? 28 : 36,
+                    minWidth: isMobile ? 28 : 36,
+                    fontSize: isMobile ? 14 : 18,
                   }}
                   aria-pressed={isFav}
                 >
@@ -161,14 +223,25 @@ export default function ExercisePickerDrawer({
                 </button>
 
                 {/* 담기 */}
-                <button style={S.plus} onClick={() => onPick(it)} title="담기" aria-label="담기">
+                <button
+                  style={{
+                    ...S.plus,
+                    width: isMobile ? 24 : 28,
+                    height: isMobile ? 24 : 28,
+                    minWidth: isMobile ? 24 : 28,
+                    fontSize: isMobile ? 16 : 18,
+                  }}
+                  onClick={() => onPick(it)}
+                  title="담기"
+                  aria-label="담기"
+                >
                   ＋
                 </button>
               </div>
             );
           })}
           {filtered.length === 0 && (
-            <div style={S.empty}>
+            <div style={{ ...S.empty, fontSize: isMobile ? 14 : undefined }}>
               {category === "fav" ? "즐겨찾기한 운동이 없어요." : "해당 카테고리에 등록된 운동이 없어요."}
             </div>
           )}
@@ -210,7 +283,6 @@ const S: Record<string, React.CSSProperties> = {
   },
   hTitle: { fontWeight: 900, color: C.navy },
 
-  // 닫기 버튼: 그리드 중앙 + SVG 아이콘
   closeBtn: {
     width: 40,
     height: 40,

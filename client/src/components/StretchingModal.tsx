@@ -1,39 +1,40 @@
-import React, { useState, useMemo } from "react";
-const videos = [
-  {
-    id: "50WCSpZtdmA",
-    title: "스트레칭",
-    url: "https://youtu.be/50WCSpZtdmA?si=JPu0XNKlFfGXJKZA",
-  },
-  {
-    id: "BnNSjsXARjc",
-    title: "레그익스텐션",
-    url: "https://youtu.be/BnNSjsXARjc?si=HihzDy6gILa5HhDh",
-  },
-  {
-    id: "et370jWSmgk",
-    title: "레그컬",
-    url: "https://youtu.be/et370jWSmgk?si=3zm9Btu6WS9N4mWx",
-  },
+// client/src/components/StretchingModal.tsx
+import React from "react";
+import { videosApi } from "../lib/api";
+
+type UiVideo = {
+  id: string;
+  title: string;
+  channelTitle?: string;
+  thumb?: string;
+  tags?: string[];
+};
+
+// DB가 비어 있을 때 임시로 보여줄 기본 3개
+const FALLBACK_VIDEOS: UiVideo[] = [
+  { id: "50WCSpZtdmA", title: "스트레칭" },
+  { id: "BnNSjsXARjc", title: "레그익스텐션" },
+  { id: "et370jWSmgk", title: "레그컬" },
 ];
-function getYTThumbnail(id: string) {
-  return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-}
-export default function StretchingModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [search, setSearch] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(videos[0].id);
-  // :흰색_확인_표시: [추가] 오른쪽 데코 이미지 위치 state
-  const [rightPos, setRightPos] = useState(0);
-  const filteredVideos = useMemo(() => {
-    if (!search.trim()) return videos;
-    return videos.filter((v) => v.title.includes(search.trim()));
-  }, [search]);
-  React.useEffect(() => {
-    if (selectedId && !filteredVideos.some((v) => v.id === selectedId)) {
-      setSelectedId(filteredVideos.length > 0 ? filteredVideos[0].id : null);
-    }
-  }, [filteredVideos, selectedId]);
-  // :흰색_확인_표시: [추가] 모달의 화면상 오른쪽 기준으로 이미지 위치 계산하는 effect
+
+const ytThumb = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+
+export default function StretchingModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = React.useState("");
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [rightPos, setRightPos] = React.useState(0);
+
+  const [dbItems, setDbItems] = React.useState<UiVideo[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  // 오른쪽 데코 위치
   React.useEffect(() => {
     function updatePosition() {
       const wndWidth = window.innerWidth;
@@ -41,7 +42,6 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
       const modalWidthVW = 94;
       const modalWidth = Math.min(modalMaxWidth, (wndWidth * modalWidthVW) / 100);
       const leftOfModal = (wndWidth - modalWidth) / 2;
-      // 오른쪽에 400px 이미지가 모달에 50px 겹치도록
       setRightPos(leftOfModal + modalWidth - 50);
     }
     updatePosition();
@@ -49,23 +49,107 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
     return () => window.removeEventListener("resize", updatePosition);
   }, []);
 
+  // ESC 닫기
   React.useEffect(() => {
-  if (!open) return;
-
-  function onKeyDown(e: KeyboardEvent) {
-    if (e.key === "Escape" || e.key === "Esc") {
-      e.preventDefault();
-      onClose();
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" || e.key === "Esc") {
+        e.preventDefault();
+        onClose();
+      }
     }
-  }
-  window.addEventListener("keydown", onKeyDown);
-  return () => {
-    window.removeEventListener("keydown", onKeyDown);
-  };
-}, [open, onClose]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  // 서버에서 목록/검색 로드
+  const loadFromDb = React.useCallback(
+    async (q: string) => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const params: any = { limit: 50, group: "stretching" }; // 원하면 group 제거
+        if (q.trim()) params.q = q.trim();
+
+        const { items } = await videosApi.list(params);
+        const ui: UiVideo[] = (items || []).map((v: any) => ({
+          id: v.youtubeId,
+          title: v.title,
+          channelTitle: v.channelTitle,
+          tags: Array.isArray(v.tags) ? v.tags : undefined,
+          thumb: v.thumb || ytThumb(v.youtubeId),
+        }));
+        setDbItems(ui);
+      } catch (e: any) {
+        setErr(e?.message || "목록을 불러오지 못했습니다.");
+        setDbItems([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // 모달 열릴 때 & 검색 변경 시(디바운스)
+  React.useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => loadFromDb(search), 200);
+    return () => clearTimeout(t);
+  }, [open, search, loadFromDb]);
+
+  // DB가 비어있으면 폴백 사용
+  const baseItems: UiVideo[] = React.useMemo(() => {
+    if (dbItems.length > 0) return dbItems;
+    if (!loading) {
+      return FALLBACK_VIDEOS.map((v) => ({ ...v, thumb: ytThumb(v.id) }));
+    }
+    return [];
+  }, [dbItems, loading]);
+
+  // ✅ 클라이언트 부분일치 필터 (제목/채널/태그)
+  const effectiveItems: UiVideo[] = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return baseItems;
+    return baseItems.filter((v) => {
+      const title = (v.title || "").toLowerCase();
+      const ch = (v.channelTitle || "").toLowerCase();
+      const tags = Array.isArray(v.tags) ? v.tags.join(" ").toLowerCase() : "";
+      return title.includes(q) || ch.includes(q) || tags.includes(q);
+    });
+  }, [baseItems, search]);
+
+  // 목록이 바뀌면 첫 영상 자동 선택
+  React.useEffect(() => {
+    if (effectiveItems.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+    if (!selectedId || !effectiveItems.some((v) => v.id === selectedId)) {
+      setSelectedId(effectiveItems[0].id);
+    }
+  }, [effectiveItems, selectedId]);
+
+  // 폴백을 DB에 업서트(시드)
+  const handleSeedToServer = React.useCallback(async () => {
+    try {
+      const payload = FALLBACK_VIDEOS.map((v) => ({
+        youtubeId: v.id,
+        title: v.title,
+        channelTitle: v.channelTitle,
+        thumb: ytThumb(v.id),
+        tags: ["스트레칭", "레그", "레그컬", "레그익스텐션"],
+        groups: ["stretching"],
+      }));
+      await videosApi.bulk(payload);
+      await loadFromDb("");
+      alert("서버에 등록되었습니다.");
+    } catch (e: any) {
+      alert(e?.message || "서버 등록에 실패했습니다.");
+    }
+  }, [loadFromDb]);
+
   if (!open) return null;
 
-  
   return (
     <div
       style={{
@@ -82,13 +166,13 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
         if (e.target === e.currentTarget) onClose();
       }}
     >
-        {/* :흰색_확인_표시: [추가] 오른쪽 데코 이미지 (모달 카드와 같은 레벨) */}
+      {/* 오른쪽 데코 */}
       <img
         src="/images/mongleright.png"
         alt="스트레칭 모달 데코"
         style={{
           position: "absolute",
-          left: rightPos,           // ← 방금 만든 상태값 사용
+          left: rightPos,
           top: "50%",
           transform: "translateY(-50%)",
           width: "400px",
@@ -97,6 +181,7 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
           zIndex: 2002,
         }}
       />
+
       <div
         style={{
           backgroundColor: "#fff",
@@ -110,22 +195,16 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
           overflow: "hidden",
         }}
       >
-        {/* Left side: Video Player */}
-        <div
-          style={{
-            flex: "1 1 50%",
-            backgroundColor: "#000",
-            position: "relative",
-          }}
-        >
+        {/* Left: Player */}
+        <div style={{ flex: "1 1 50%", backgroundColor: "#000", position: "relative" }}>
           {selectedId ? (
             <iframe
               key={selectedId}
               style={{ width: "100%", height: "100%", border: "none" }}
-              src={`https://www.youtube.com/embed/${selectedId}?autoplay=1`}
+              src={`https://www.youtube.com/embed/${selectedId}?autoplay=1&mute=1`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              title="스트레칭 영상"
+              title="운동 영상"
             />
           ) : (
             <div
@@ -138,11 +217,12 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
                 height: "100%",
               }}
             >
-              검색 결과가 없습니다.
+              {loading ? "불러오는 중…" : "검색 결과가 없습니다."}
             </div>
           )}
         </div>
-        {/* Right side: Controls */}
+
+        {/* Right: Controls */}
         <div
           style={{
             flex: "1 1 50%",
@@ -152,30 +232,22 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
             flexDirection: "column",
           }}
         >
-          {/* Header with search and Close btn */}
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              marginBottom: 16,
-              position: "relative",
-            }}
-          >
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
             <input
               type="text"
-              placeholder="운동 이름을 입력해주세요"
+              placeholder="운동 이름/키워드로 검색 (예: 레그, 스트레칭)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 flexGrow: 1,
-                padding: "8px 40px 8px 12px",  // 오른쪽에 공간 확보
+                padding: "8px 12px",
                 borderRadius: 12,
                 border: "2px solid #7E7058",
                 fontSize: 16,
                 fontFamily: "'BMJUA', sans-serif",
               }}
             />
+            {/* ▼ X 버튼: 모달 닫기 전용 */}
             <button
               onClick={onClose}
               aria-label="모달 닫기"
@@ -194,7 +266,34 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
               X
             </button>
           </div>
-          {/* Thumbnails list */}
+
+          {err && (
+            <div style={{ marginBottom: 8, color: "crimson", fontSize: 13 }}>
+              {err}
+            </div>
+          )}
+
+          {/* 폴백만 노출 중이면 시드 버튼 보이기 */}
+          {dbItems.length === 0 && !loading && !search.trim() && (
+            <div style={{ marginBottom: 10, display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={handleSeedToServer}
+                style={{
+                  border: "1px solid #ddd",
+                  background: "#fff",
+                  borderRadius: 10,
+                  padding: "6px 10px",
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+                title="현재 기본 3개 영상을 서버 DB에 저장합니다."
+              >
+                기본 3개 서버에 등록
+              </button>
+            </div>
+          )}
+
+          {/* 리스트 */}
           <div
             style={{
               overflowY: "auto",
@@ -204,7 +303,7 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
               gap: 12,
             }}
           >
-            {filteredVideos.length === 0 && (
+            {effectiveItems.length === 0 && !loading && (
               <div
                 style={{
                   textAlign: "center",
@@ -215,16 +314,14 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
                 검색 결과 없음
               </div>
             )}
-            {filteredVideos.map((v) => (
+
+            {effectiveItems.map((v) => (
               <button
                 key={v.id}
                 onClick={() => setSelectedId(v.id)}
                 style={{
                   cursor: "pointer",
-                  border:
-                    v.id === selectedId
-                      ? "3px solid #FFAE00"
-                      : "3px solid transparent",
+                  border: v.id === selectedId ? "3px solid #FFAE00" : "3px solid transparent",
                   borderRadius: 14,
                   overflow: "hidden",
                   padding: 0,
@@ -232,9 +329,10 @@ export default function StretchingModal({ open, onClose }: { open: boolean; onCl
                   boxShadow: v.id === selectedId ? "0 0 10px #FFAE00" : "none",
                 }}
                 aria-label={`재생할 영상 선택: ${v.title}`}
+                title={v.title}
               >
                 <img
-                  src={getYTThumbnail(v.id)}
+                  src={v.thumb || ytThumb(v.id)}
                   alt={v.title}
                   style={{ width: "100%", height: "auto", display: "block" }}
                 />

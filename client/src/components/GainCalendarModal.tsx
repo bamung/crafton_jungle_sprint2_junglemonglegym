@@ -80,7 +80,7 @@ const styles: { [key: string]: CSSProperties } = {
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "#FAF4E4CC",
+    background: "#898989cc",
     backdropFilter: "blur(2px)",
     zIndex: 2000,
   },
@@ -133,7 +133,6 @@ const styles: { [key: string]: CSSProperties } = {
     height: 36,
     borderRadius: "9999px",
     background: "#FAF4E4",
-    border: "4px solid #7e5a3e",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -238,8 +237,8 @@ const styles: { [key: string]: CSSProperties } = {
     color: "#ffe384",
   },
   todayOutline: {
-    outline: "3px dashed #b1e5d9",
-    outlineOffset: -6,
+    outline: "7px dashed #84e587ff",
+    outlineOffset: -10,
   },
   footer: {
     display: "flex",
